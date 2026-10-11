@@ -2,7 +2,8 @@ name: Deploy to GitHub Pages
 
 on:
   push:
-    branches: [main]
+    # The repo's default branch (there is no main yet); main is listed for when one is created.
+    branches: [claude/japanese-speaking-listening-app-exs1qj, main]
   workflow_dispatch:
 
 permissions:

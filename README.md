@@ -30,5 +30,5 @@ npm run build      # dist/ (정적 파일, 서버 불필요)
 
 ## 배포
 
-`main`에 머지하면 `.github/workflows/deploy.yml`이 GitHub Pages로 배포해요.
-그 전에 저장소 Settings → Pages → Source에서 **GitHub Actions**를 한 번 선택해 두어야 해요.
+기본 브랜치에 푸시하면 `.github/workflows/deploy.yml`이 GitHub Pages로 배포해요. 주소는 https://yunmo2847.github.io/JapanesePractice/ 예요.
+처음 한 번만 저장소 Settings → Pages → Source에서 **GitHub Actions**를 선택해 두어야 해요.
