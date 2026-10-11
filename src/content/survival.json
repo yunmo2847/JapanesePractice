@@ -1,0 +1,41 @@
+[
+  { "id": "sv-etto", "cat": "stall", "ja": "えっと…", "ko": "음… / 그러니까…", "register": "both", "example": { "ja": "えっと…、趣味{しゅみ}はゲームです。", "ko": "음… 취미는 게임이에요." } },
+  { "id": "sv-ano", "cat": "stall", "ja": "あの…", "ko": "저기… (말 꺼낼 때)", "register": "both", "example": { "ja": "あの…、ちょっといいですか。", "ko": "저기… 잠깐 괜찮아요?" } },
+  { "id": "sv-soudesune", "cat": "stall", "ja": "そうですね…", "ko": "글쎄요… (생각할 시간 벌기)", "register": "polite", "example": { "ja": "そうですね…、ラーメンが好{す}きです。", "ko": "글쎄요… 라멘을 좋아해요." } },
+  { "id": "sv-nanka", "cat": "stall", "ja": "なんか…", "ko": "뭔가… / 그냥…", "register": "casual", "example": { "ja": "なんか、眠{ねむ}い。", "ko": "뭔가 졸려." } },
+  { "id": "sv-nanteiu", "cat": "stall", "ja": "何{なん}て言{い}うんだろう…", "ko": "뭐라고 하지…", "register": "both", "example": { "ja": "何{なん}て言{い}うんだろう…、ちょっと難{むずか}しいです。", "ko": "뭐라고 하지… 좀 어렵네요." } },
+  { "id": "sv-chotto-matte", "cat": "stall", "ja": "ちょっと待{ま}ってください。", "ko": "잠깐만요.", "register": "polite" },
+
+  { "id": "sv-mitaina", "cat": "paraphrase", "ja": "〜みたいなもの", "ko": "~같은 것", "register": "both", "example": { "ja": "韓国{かんこく}のお祭{まつ}りみたいなものです。", "ko": "한국의 축제 같은 거예요." } },
+  { "id": "sv-tsukau", "cat": "paraphrase", "ja": "〜するときに使{つか}うもの", "ko": "~할 때 쓰는 것", "register": "both", "example": { "ja": "髪{かみ}を乾{かわ}かすときに使{つか}うものです。", "ko": "머리 말릴 때 쓰는 거예요." } },
+  { "id": "sv-kantan", "cat": "paraphrase", "ja": "簡単{かんたん}に言{い}うと…", "ko": "간단히 말하면…", "register": "both" },
+  { "id": "sv-eigo", "cat": "paraphrase", "ja": "英語{えいご}で言{い}うと…", "ko": "영어로 하면…", "register": "both", "example": { "ja": "英語{えいご}で言{い}うと、\"homework\"です。", "ko": "영어로 하면 homework예요." } },
+  { "id": "sv-nihongo-de", "cat": "paraphrase", "ja": "日本語{にほんご}で何{なん}て言{い}いますか。", "ko": "일본어로 뭐라고 해요?", "register": "polite" },
+
+  { "id": "sv-mouichido", "cat": "check", "ja": "もう一度{いちど}お願{ねが}いします。", "ko": "한 번 더 말해 주세요.", "register": "polite" },
+  { "id": "sv-yukkuri", "cat": "check", "ja": "ゆっくりお願{ねが}いします。", "ko": "천천히 말해 주세요.", "register": "polite" },
+  { "id": "sv-douiu", "cat": "check", "ja": "〜ってどういう意味{いみ}ですか。", "ko": "~가 무슨 뜻이에요?", "register": "polite", "example": { "ja": "「やばい」ってどういう意味{いみ}ですか。", "ko": "'야바이'가 무슨 뜻이에요?" } },
+  { "id": "sv-wakaranai", "cat": "check", "ja": "すみません、よくわかりません。", "ko": "죄송해요, 잘 모르겠어요.", "register": "polite" },
+  { "id": "sv-san-wa", "cat": "check", "ja": "〇〇さんは?", "ko": "○○ 씨는요? (되묻기)", "register": "polite", "example": { "ja": "私{わたし}は犬{いぬ}が好{す}きです。ユイさんは?", "ko": "저는 개를 좋아해요. 유이 씨는요?" } },
+  { "id": "sv-doudesuka", "cat": "check", "ja": "〇〇さんはどうですか。", "ko": "○○ 씨는 어때요?", "register": "polite" },
+
+  { "id": "sv-hee", "cat": "aizuchi", "ja": "へえ!", "ko": "오! / 그렇구나!", "register": "both" },
+  { "id": "sv-soudesuka", "cat": "aizuchi", "ja": "そうですか。", "ko": "그래요?", "register": "polite" },
+  { "id": "sv-sounandesu", "cat": "aizuchi", "ja": "そうなんですね。", "ko": "그렇군요.", "register": "polite" },
+  { "id": "sv-iidesune", "cat": "aizuchi", "ja": "いいですね!", "ko": "좋네요!", "register": "polite" },
+  { "id": "sv-sugoi", "cat": "aizuchi", "ja": "すごいですね!", "ko": "대단하네요!", "register": "polite" },
+  { "id": "sv-watashimo", "cat": "aizuchi", "ja": "私{わたし}もです!", "ko": "저도요!", "register": "polite" },
+
+  { "id": "sv-tokorode", "cat": "switch", "ja": "ところで、", "ko": "그런데 (화제 전환)", "register": "both" },
+  { "id": "sv-souieba", "cat": "switch", "ja": "そういえば、", "ko": "그러고 보니", "register": "both" },
+
+  { "id": "sv-tomoimasu", "cat": "opinion", "ja": "〜と思{おも}います。", "ko": "~라고 생각해요.", "register": "polite", "example": { "ja": "おいしいと思{おも}います。", "ko": "맛있다고 생각해요." } },
+  { "id": "sv-watashi-wa", "cat": "opinion", "ja": "私{わたし}は〜派{は}です。", "ko": "저는 ~파예요.", "register": "polite", "example": { "ja": "私{わたし}は猫派{ねこは}です。", "ko": "저는 고양이파예요." } },
+  { "id": "sv-dochiraka", "cat": "opinion", "ja": "どちらかというと…", "ko": "굳이 말하자면…", "register": "both" },
+
+  { "id": "sv-tanoshii", "cat": "feeling", "ja": "楽{たの}しかったです。", "ko": "즐거웠어요.", "register": "polite" },
+  { "id": "sv-ureshii", "cat": "feeling", "ja": "うれしいです。", "ko": "기뻐요.", "register": "polite" },
+  { "id": "sv-tsukareta", "cat": "feeling", "ja": "疲{つか}れました。", "ko": "피곤해요.", "register": "polite" },
+  { "id": "sv-zannen", "cat": "feeling", "ja": "残念{ざんねん}です。", "ko": "아쉬워요.", "register": "polite" },
+  { "id": "sv-bikkuri", "cat": "feeling", "ja": "びっくりしました。", "ko": "깜짝 놀랐어요.", "register": "polite" }
+]
