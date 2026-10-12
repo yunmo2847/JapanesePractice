@@ -13,6 +13,7 @@ type Props = {
   autoFocus?: boolean;
   submitLabel?: string;
   katakana?: boolean; // convert romaji to katakana instead of hiragana
+  onType?: (value: string) => void; // every change, e.g. to know whether the box is empty
 };
 
 /**
@@ -21,7 +22,7 @@ type Props = {
  * text) and runs on compositionend, so characters are not doubled.
  */
 export const KanaInput = forwardRef<KanaInputHandle, Props>(function KanaInput(
-  { onSubmit, onFirstKey, placeholder, disabled, autoFocus, submitLabel = '보내기', katakana },
+  { onSubmit, onFirstKey, placeholder, disabled, autoFocus, submitLabel = '보내기', katakana, onType },
   ref,
 ) {
   const [s] = useSettings();
@@ -51,6 +52,7 @@ export const KanaInput = forwardRef<KanaInputHandle, Props>(function KanaInput(
       el.value = el.value.slice(0, at) + text + el.value.slice(at);
       el.focus();
       el.setSelectionRange(at + text.length, at + text.length);
+      onType?.(el.value);
     },
     focus: () => input.current?.focus(),
   }));
@@ -66,6 +68,7 @@ export const KanaInput = forwardRef<KanaInputHandle, Props>(function KanaInput(
     if (!text) return;
     onSubmit(text);
     el.value = '';
+    onType?.('');
     el.focus();
   };
 
@@ -99,6 +102,7 @@ export const KanaInput = forwardRef<KanaInputHandle, Props>(function KanaInput(
             onFirstKey?.();
           }
           if (!composing.current) convert();
+          onType?.(input.current?.value ?? '');
         }}
       />
       <button type="submit" className="btn primary" disabled={disabled}>

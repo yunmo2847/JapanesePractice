@@ -17,7 +17,8 @@ function allJapanese(): [string, string][] {
   });
   chains.forEach((c) => [c.start, ...c.links.map((l) => l.example)].forEach((x) => out.push([c.id, x.ja])));
   topics.forEach((t) => {
-    out.push([t.id, t.question.ja], [t.id, t.answers.polite.ja], [t.id, t.answers.casual.ja]);
+    out.push([t.id, t.question.ja], [t.id, t.answers.polite.ja], [t.id, t.answers.casual.ja], [t.id, t.partner.ja]);
+    t.followUps.forEach((f) => out.push([t.id, f.ja]));
     t.hints.words.forEach((w) => out.push([t.id, w.ja]));
   });
   dialogues.forEach((d) => [...d.turns, d.reply].forEach((x) => out.push([d.id, x.ja])));
@@ -83,5 +84,15 @@ describe('content integrity', () => {
   it('ends model answers and dialogues with a question to the learner', () => {
     for (const t of topics) expect(plain(t.answers.polite.ja), t.id).toMatch(/[?？]|か。$/);
     for (const d of dialogues) expect(d.turns[d.turns.length - 1].speaker, d.id).toBe('ユイ');
+  });
+});
+
+describe('free-talk partner lines', () => {
+  it('gives every topic ユイ\'s own answer and two follow-up questions', () => {
+    for (const t of topics) {
+      expect(plain(t.partner.ja), t.id).not.toMatch(/[?？]$|か。$/);
+      expect(t.followUps, t.id).toHaveLength(2);
+      for (const f of t.followUps) expect(plain(f.ja), t.id).toMatch(/[?？]$|か。$/);
+    }
   });
 });

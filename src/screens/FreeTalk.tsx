@@ -1,12 +1,13 @@
 import { useEffect, useRef, useState } from 'react';
-import { connectors, patternById, type Topic } from '../content';
+import { connectors, patternById, type JaKo, type Topic } from '../content';
 import { plain } from '../lib/furigana';
 import { analyze, type Report } from '../lib/report';
 import { sentenceTarget } from '../lib/days';
 import { today, useSettings, useStore, type FreeTalk as FreeTalkRecord } from '../lib/store';
-import { stopSpeaking } from '../lib/tts';
+import { speak, stopSpeaking } from '../lib/tts';
+import { initialPartner, partnerTurn, type PartnerState } from '../lib/partner';
 import { useKeyboardOpen } from '../lib/useKeyboardOpen';
-import { Ja, Sheet, SpeakButton, Tag, TimeBar, useCountdown, useSpeak } from '../components/ui';
+import { Ja, Sheet, SpeakButton, Tag, TimeBar, useCountdown } from '../components/ui';
 import { KanaInput, type KanaInputHandle } from '../components/KanaInput';
 import { SurvivalList } from '../components/SurvivalList';
 
@@ -22,10 +23,10 @@ export function FreeTalk({ topic, day, onDone }: { topic: Topic; day: number; on
   const [seconds, setSeconds] = useState(120);
   const [rounds, setRounds] = useState<FreeTalkRecord[]>([]);
 
-  const finishRound = (messages: string[], firstReaction: number | null) => {
+  const finishRound = (messages: string[], firstReaction: number | null, log: FreeTalkRecord['log']) => {
     const detect = topic.hints.patterns.flatMap((id) => patternById(id)?.detect ?? []);
     const report = analyze(messages, connectors, detect, firstReaction);
-    const record: FreeTalkRecord = { topicId: topic.id, day, round, at: today(), messages, report, seconds };
+    const record: FreeTalkRecord = { topicId: topic.id, day, round, at: today(), messages, report, seconds, log };
     update((s) => ({ ...s, freetalks: [...s.freetalks, record] }));
     setRounds((r) => [...r, record]);
     setPhase('report');
@@ -71,6 +72,7 @@ function Intro({ topic, round, seconds, setSeconds, onStart }: {
       <p className="prompt-ko">{topic.question.ko}</p>
       <p className="muted">
         준비 없이 바로 대답해 보세요. 한 문장 쓰고 Enter, 이어서 다음 문장. <b>답 → 이유 → 예시 → 되묻기</b> 순서를 떠올리세요.
+        잠깐 멈추면(4초) 유이가 맞장구치고 이어서 물어봐요. 되물으면 유이도 자기 얘기를 해요.
       </p>
       <div className="row wrap">
         <span>목표 시간</span>
@@ -121,30 +123,54 @@ function Hints({ topic }: { topic: Topic }) {
   );
 }
 
-function Talk({ topic, seconds, onFinish }: { topic: Topic; seconds: number; onFinish: (m: string[], first: number | null) => void }) {
+type ChatLine = { who: 'me' | 'them'; ja: string; ko?: string };
+
+/** Learner silent this long after sending (and input empty) → ユイ takes her turn. */
+const PARTNER_PAUSE_MS = 4000;
+const YUI_PITCH = 1.15;
+
+function Talk({ topic, seconds, onFinish }: {
+  topic: Topic; seconds: number; onFinish: (m: string[], first: number | null, log: ChatLine[]) => void;
+}) {
   const [settings] = useSettings();
-  const say = useSpeak();
   const keyboard = useKeyboardOpen();
   const input = useRef<KanaInputHandle>(null);
-  const [messages, setMessages] = useState<string[]>([]);
-  const [running, setRunning] = useState(false);
+  const [chat, setChat] = useState<ChatLine[]>([{ who: 'them', ja: topic.question.ja, ko: topic.question.ko }]);
+  const [started, setStarted] = useState(false);
+  const [speaking, setSpeaking] = useState(false);
   const [startedAt, setStartedAt] = useState(0);
   const [firstKey, setFirstKey] = useState<number | null>(null);
   const [stuck, setStuck] = useState(false);
   const [sheet, setSheet] = useState(false);
   const [ended, setEnded] = useState(false);
-  const messagesRef = useRef(messages);
-  messagesRef.current = messages;
+  const [partner, setPartner] = useState<PartnerState>(initialPartner);
+  const [pending, setPending] = useState<string[]>([]); // learner lines since ユイ last spoke
+  const [activity, setActivity] = useState(0); // bumps on every keystroke/send
+  const typing = useRef(false);
+  const chatRef = useRef(chat);
+  chatRef.current = chat;
   const log = useRef<HTMLDivElement>(null);
 
   const end = () => {
     if (ended) return;
     setEnded(true);
-    setRunning(false);
     stopSpeaking();
-    onFinish(messagesRef.current, firstKey === null ? null : Math.round(((firstKey - startedAt) / 1000) * 10) / 10);
+    const lines = chatRef.current;
+    const mine = lines.filter((l) => l.who === 'me').map((l) => l.ja);
+    const first = firstKey === null ? null : Math.round(((firstKey - startedAt) / 1000) * 10) / 10;
+    onFinish(mine, first, lines.map(({ who, ja }) => ({ who, ja })));
   };
-  const left = useCountdown(seconds, running, end);
+  // ユイ's speaking time doesn't eat into the learner's time.
+  const left = useCountdown(seconds, started && !speaking && !ended, end);
+
+  /** ユイ says something (shown at once, spoken in order); the clock waits for her. */
+  const yuiSays = async (lines: JaKo[]) => {
+    setChat((c) => [...c, ...lines.map((l) => ({ who: 'them' as const, ja: l.ja, ko: l.ko }))]);
+    if (!settings.sound) return;
+    setSpeaking(true);
+    for (const l of lines) await speak(plain(l.ja), { rate: settings.rate, voice: settings.voice, pitch: YUI_PITCH });
+    setSpeaking(false);
+  };
 
   // Ask the question, then start the clock when it has finished playing (Bluetooth earbuds lag).
   useEffect(() => {
@@ -152,9 +178,9 @@ function Talk({ topic, seconds, onFinish }: { topic: Topic; seconds: number; onF
     const start = () => {
       if (cancelled) return;
       setStartedAt(Date.now());
-      setRunning(true);
+      setStarted(true);
     };
-    if (settings.sound) say(topic.question.ja).then(start);
+    if (settings.sound) speak(plain(topic.question.ja), { rate: settings.rate, voice: settings.voice, pitch: YUI_PITCH }).then(start);
     else start();
     return () => {
       cancelled = true;
@@ -162,20 +188,42 @@ function Talk({ topic, seconds, onFinish }: { topic: Topic; seconds: number; onF
     };
   }, []);
 
+  const partnerTurnNow = () => {
+    if (!pending.length || speaking || ended) return;
+    const { lines, state } = partnerTurn(topic, partner, pending);
+    setPartner(state);
+    setPending([]);
+    yuiSays(lines);
+  };
+
+  // The learner paused (sent something, input empty, no typing) → ユイ answers.
+  useEffect(() => {
+    if (!started || speaking || ended || !pending.length || typing.current) return;
+    const id = window.setTimeout(partnerTurnNow, PARTNER_PAUSE_MS);
+    return () => window.clearTimeout(id);
+    // Not on every render: the countdown re-renders 5×/s and would keep resetting the pause.
+  }, [started, speaking, ended, pending, partner, activity]);
+
   // No typing for 10 s after the clock starts → offer stalling phrases.
   useEffect(() => {
-    if (!running || firstKey !== null) return;
+    if (!started || firstKey !== null) return;
     const id = window.setTimeout(() => setStuck(true), 10_000);
     return () => window.clearTimeout(id);
-  }, [running, firstKey]);
+  }, [started, firstKey]);
 
   useEffect(() => {
     log.current?.scrollTo({ top: log.current.scrollHeight });
-  }, [messages]);
+  }, [chat]);
 
   const onFirstKey = () => {
     if (firstKey === null) setFirstKey(Date.now());
     setStuck(false);
+  };
+
+  const send = (text: string) => {
+    setChat((c) => [...c, { who: 'me', ja: text }]);
+    setPending((p) => [...p, text]);
+    setActivity((a) => a + 1);
   };
 
   return (
@@ -183,15 +231,19 @@ function Talk({ topic, seconds, onFinish }: { topic: Topic; seconds: number; onF
       <div className="talk-main">
         <TimeBar left={left} total={seconds} />
         <div className="chat-log" ref={log}>
-          <div className="bubble them">
-            <span className="who">ユイ</span>
-            <Ja text={topic.question.ja} />
-            <span className="muted small">{topic.question.ko}</span>
-          </div>
-          {!running && <p className="muted small center">질문을 듣는 중… 끝나면 타이머가 시작돼요</p>}
-          {messages.map((m, i) => (
-            <div key={i} className="bubble me" lang="ja">{m}</div>
-          ))}
+          {chat.map((l, i) =>
+            l.who === 'them' ? (
+              <div key={i} className="bubble them">
+                <span className="who">ユイ</span>
+                <Ja text={l.ja} />
+                {l.ko && <span className="muted small">{l.ko}</span>}
+              </div>
+            ) : (
+              <div key={i} className="bubble me" lang="ja">{l.ja}</div>
+            ),
+          )}
+          {!started && <p className="muted small center">질문을 듣는 중… 끝나면 타이머가 시작돼요</p>}
+          {speaking && started && <p className="muted small center">ユイ가 말하는 중 · 타이머 멈춤</p>}
         </div>
         {stuck && (
           <div className="stuck row wrap" role="status">
@@ -202,9 +254,16 @@ function Talk({ topic, seconds, onFinish }: { topic: Topic; seconds: number; onF
           </div>
         )}
         <div className="talk-input">
-          <KanaInput ref={input} autoFocus onFirstKey={onFirstKey} onSubmit={(t) => setMessages((m) => [...m, t])} disabled={ended} />
-          <div className="row between">
+          <KanaInput ref={input} autoFocus onFirstKey={onFirstKey} onSubmit={send} disabled={ended}
+            onType={(v) => {
+              typing.current = v.length > 0;
+              setActivity((a) => a + 1);
+            }} />
+          <div className="row between wrap">
             <button className="btn ghost sm survival-toggle" onClick={() => setSheet(true)}>🆘 생존 표현</button>
+            <button className="btn sm" onClick={partnerTurnNow} disabled={!pending.length || speaking || ended}>
+              ユイ 차례 ▶
+            </button>
             <button className="btn ghost sm" onClick={end}>끝내기</button>
           </div>
         </div>
@@ -285,11 +344,19 @@ function ReportView({ topic, day, rounds, onRetry, onDone }: {
       <div className="compare">
         <div className="panel stack">
           <div className="row between">
-            <h3>내 대답</h3>
+            <h3>{last.log ? '대화 기록' : '내 대답'}</h3>
             {last.messages.length > 0 && <SpeakButton text={last.messages.join('。')} label="내 문장 듣기" small />}
           </div>
           {last.messages.length === 0 ? (
             <p className="muted">입력한 문장이 없어요. 다시 대답하기로 한 문장부터 시작해 봐요.</p>
+          ) : last.log ? (
+            <ul className="transcript" lang="ja">
+              {last.log.map((l, i) => (
+                <li key={i} className={l.who}>
+                  <span className="who">{l.who === 'them' ? 'ユイ' : '나'}</span> {l.who === 'them' ? <Ja text={l.ja} /> : l.ja}
+                </li>
+              ))}
+            </ul>
           ) : (
             <ol className="my-lines" lang="ja">{last.messages.map((m, i) => <li key={i}>{m}</li>)}</ol>
           )}

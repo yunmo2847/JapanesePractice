@@ -45,6 +45,8 @@ export type Topic = {
   question: JaKo;
   hints: { patterns: string[]; connectors: string[]; words: JaKo[] };
   answers: { polite: JaKo; casual: JaKo };
+  partner: JaKo; // ユイ's own answer, said when the learner asks back
+  followUps: JaKo[]; // ユイ's next questions, one per learner turn
 };
 
 export type Dialogue = {

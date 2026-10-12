@@ -215,8 +215,8 @@ for (const layout of LAYOUTS) {
 }
 
 /** Replaces speechSynthesis with a fake that records what was spoken and with which voice. */
-async function fakeSpeech(page: Page, voices: { name: string; lang: string }[], loadDelayMs: number) {
-  await page.addInitScript(({ voices, loadDelayMs }) => {
+async function fakeSpeech(page: Page, voices: { name: string; lang: string }[], loadDelayMs: number, speakMs = 10) {
+  await page.addInitScript(({ voices, loadDelayMs, speakMs }) => {
     const w = window as unknown as { __spoken: { text: string; voice?: string; lang: string }[] };
     w.__spoken = [];
     let list: SpeechSynthesisVoice[] = [];
@@ -228,7 +228,7 @@ async function fakeSpeech(page: Page, voices: { name: string; lang: string }[], 
       speak(u: SpeechSynthesisUtterance) {
         w.__spoken.push({ text: u.text, voice: u.voice?.name, lang: u.lang });
         setTimeout(() => u.onstart?.(new Event('start') as SpeechSynthesisEvent), 5);
-        setTimeout(() => u.onend?.(new Event('end') as SpeechSynthesisEvent), 10);
+        setTimeout(() => u.onend?.(new Event('end') as SpeechSynthesisEvent), speakMs);
       },
       cancel() {},
       resume() {},
@@ -246,7 +246,7 @@ async function fakeSpeech(page: Page, voices: { name: string; lang: string }[], 
       list = voices.map((v) => ({ ...v, voiceURI: v.name, default: false, localService: true }) as SpeechSynthesisVoice);
       target.dispatchEvent(new Event('voiceschanged'));
     }, loadDelayMs);
-  }, { voices, loadDelayMs });
+  }, { voices, loadDelayMs, speakMs });
 }
 
 const spoken = (page: Page) => page.evaluate(() => (window as unknown as { __spoken: { text: string; voice?: string; lang: string }[] }).__spoken);
@@ -345,5 +345,62 @@ test.describe('katakana', () => {
     await page.locator('.kana-input input').fill(asTyped);
     await page.getByRole('button', { name: '확인' }).click();
     await expect(page.getByText('정답!')).toBeVisible();
+  });
+});
+
+test.describe('free-talk back-and-forth with ユイ', () => {
+  test.use(TAB_LANDSCAPE);
+
+  test('ユイ reacts after a pause, follows up, answers when asked back, and it all lands in the report', async ({ page }) => {
+    await seed(page, { sound: false });
+    await page.goto('/#/practice/3/talk/t-food');
+    await page.getByRole('button', { name: '시작하기 ▶' }).click();
+    const talk = page.locator('.talk-input input');
+    const yui = page.locator('.bubble.them');
+
+    await talk.fill('ラーメンがすきです。');
+    await talk.press('Enter');
+    // While the learner keeps typing, ユイ waits.
+    await talk.fill('おいし');
+    await page.waitForTimeout(5000);
+    await expect(yui).toHaveCount(1);
+    await talk.fill('おいしいから。');
+    await talk.press('Enter');
+    // After a 4 s pause she reacts and asks the first follow-up (one bubble each).
+    await expect(yui).toHaveCount(3, { timeout: 8000 });
+    await expect(yui.nth(1)).toContainText('いいですね');
+    await expect(yui.nth(2)).toContainText('요리는 해요?');
+
+    // Asking back + the manual button: she answers about herself, then asks the next one.
+    await talk.fill('はい。ユイさんは？');
+    await talk.press('Enter');
+    await page.getByRole('button', { name: 'ユイ 차례 ▶' }).click();
+    await expect(page.getByText('저는 초밥을 좋아해요. 하지만 매운 건 잘 못 먹어요.')).toBeVisible();
+    await expect(page.getByText('한국에서 추천하는 음식은 뭐예요?')).toBeVisible();
+    await expect(page.getByRole('button', { name: 'ユイ 차례 ▶' })).toBeDisabled();
+
+    await page.getByRole('button', { name: '끝내기' }).click();
+    await expect(page.getByRole('heading', { name: '대화 기록' })).toBeVisible();
+    await expect(page.locator('.transcript li.them')).toHaveCount(6); // question + 2 + 3
+    await expect(page.locator('.transcript li.me')).toHaveCount(3);
+    // Only the learner's lines are scored.
+    await expect(page.locator('.stat', { hasText: '문장 (목표 3)' })).toContainText('4');
+  });
+
+  test('the clock stops while ユイ is speaking', async ({ page }) => {
+    await seed(page, { sound: true });
+    await fakeSpeech(page, [{ name: 'Google 日本語', lang: 'ja-JP' }], 0, 2500); // each sentence takes 2.5 s
+    await page.goto('/#/practice/3/talk/t-food');
+    await page.getByRole('button', { name: '시작하기 ▶' }).click();
+    await expect(page.getByText('질문을 듣는 중')).toBeHidden({ timeout: 10_000 });
+    const talk = page.locator('.talk-input input');
+    await talk.fill('ラーメンがすきです。');
+    await talk.press('Enter');
+    await page.getByRole('button', { name: 'ユイ 차례 ▶' }).click();
+    await expect(page.getByText('ユイ가 말하는 중 · 타이머 멈춤')).toBeVisible();
+    const before = await page.locator('.timebar-text').textContent();
+    await page.waitForTimeout(3000);
+    expect(await page.locator('.timebar-text').textContent()).toBe(before);
+    await expect(page.getByText('ユイ가 말하는 중 · 타이머 멈춤')).toBeHidden({ timeout: 10_000 });
   });
 });

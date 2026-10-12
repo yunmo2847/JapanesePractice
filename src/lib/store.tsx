@@ -30,6 +30,7 @@ export type FreeTalk = {
   messages: string[];
   report: Report;
   seconds: number;
+  log?: { who: 'me' | 'them'; ja: string }[]; // whole chat incl. ユイ (older records lack it)
 };
 
 export type State = {

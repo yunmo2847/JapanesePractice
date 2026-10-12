@@ -328,3 +328,8 @@ details summary { cursor: pointer; min-height: 44px; display: flex; align-items:
 .kana-big { font-size: 1.6rem; line-height: 1.2; }
 .kana-quiz { font-size: 5rem; line-height: 1.2; font-family: 'Noto Sans JP', 'Hiragino Sans', system-ui, sans-serif; }
 .kana-word { font-size: 2.2rem; font-family: 'Noto Sans JP', 'Hiragino Sans', system-ui, sans-serif; }
+
+.transcript { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; font-size: 1.1rem; }
+.transcript li.them { color: var(--muted); }
+.transcript li.me { font-weight: 600; }
+.transcript .who { display: inline-block; min-width: 2.5em; }
