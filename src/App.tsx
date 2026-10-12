@@ -7,13 +7,15 @@ import { Practice } from './screens/Practice';
 import { Progress } from './screens/Progress';
 import { Settings } from './screens/Settings';
 import { Katakana } from './screens/Katakana';
+import { Structures } from './screens/Structures';
 import { SurvivalList } from './components/SurvivalList';
 import { NO_JA_VOICE } from './lib/tts';
 
 const NAV = [
   { path: '', icon: '🏠', label: '홈' },
   { path: 'practice', icon: '✏️', label: '연습' },
-  { path: 'survival', icon: '🆘', label: '표현집' },
+  { path: 'survival', icon: '💬', label: '표현집' },
+  { path: 'structures', icon: '🧩', label: '문장 구조' },
   { path: 'progress', icon: '📈', label: '진도' },
   { path: 'settings', icon: '⚙️', label: '설정' },
 ];
@@ -45,12 +47,14 @@ export function App() {
         return (
           <div className="stack">
             <h1>생존 표현집</h1>
-            <p className="muted">프리토킹 중 막혔을 때 꺼내 쓰는 표현. ☆로 즐겨찾기하면 채팅 화면 맨 위에 나와요.</p>
-            <div className="panel"><SurvivalList /></div>
+            <p className="muted">대화하다 막힐 때 쓰는 표현과 홈스테이 생활 표현이에요. ☆를 누르면 ★ 탭에 모여요 (채팅 화면에서도 볼 수 있어요).</p>
+            <SurvivalList />
           </div>
         );
       case 'katakana':
         return <Katakana tab={route[1]} />;
+      case 'structures':
+        return <Structures section={route[1]} />;
       case 'progress':
         return <Progress />;
       case 'settings':
@@ -63,7 +67,6 @@ export function App() {
   return (
     <div className={`app ${section === 'session' ? 'in-session' : ''}`}>
       <nav className="nav" aria-label="메뉴">
-        <span className="brand">니혼고 21</span>
         {NAV.map((n) => (
           <a key={n.label} href={`#/${n.path}`} className={section === n.path || (n.path === '' && section === 'session') || (n.path === 'practice' && section === 'katakana') ? 'on' : ''}>
             <span className="nav-icon" aria-hidden>{n.icon}</span>

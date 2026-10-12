@@ -160,13 +160,11 @@ test.describe('Day 1 session on a tablet', () => {
 });
 
 const LAYOUTS = [
-  { name: 'phone', viewport: { width: 360, height: 740 }, hasTouch: true, isMobile: true, nav: 'bottom' },
-  { name: 'tab-portrait', viewport: { width: 800, height: 1280 }, hasTouch: true, isMobile: true, nav: 'bottom' },
-  { name: 'tab-landscape', ...TAB_LANDSCAPE, nav: 'rail' },
-  { name: 'pc', viewport: { width: 1440, height: 900 }, hasTouch: false, isMobile: false, nav: 'sidebar' },
+  { name: 'phone', viewport: { width: 360, height: 740 }, hasTouch: true, isMobile: true },
+  { name: 'tab-portrait', viewport: { width: 800, height: 1280 }, hasTouch: true, isMobile: true },
+  { name: 'tab-landscape', ...TAB_LANDSCAPE },
+  { name: 'pc', viewport: { width: 1440, height: 900 }, hasTouch: false, isMobile: false },
 ];
-
-const NAV_WIDTH = { rail: 76, sidebar: 200 } as const;
 
 for (const layout of LAYOUTS) {
   test.describe(`layout: ${layout.name}`, () => {
@@ -177,16 +175,19 @@ for (const layout of LAYOUTS) {
 
       // Free talk first: full-page screenshots below reset Playwright's touch emulation.
       await page.goto('/#/practice/3/talk/t-food');
+      // Bottom tab bar on every device: near the bottom edge, never wider than the screen.
       const nav = await page.locator('.nav').boundingBox();
-      if (layout.nav === 'bottom') expect(nav!.y + nav!.height).toBeCloseTo(layout.viewport.height, 0);
-      else expect(nav!.width).toBe(NAV_WIDTH[layout.nav as 'rail' | 'sidebar']);
+      expect(nav!.y + nav!.height).toBeGreaterThan(layout.viewport.height - 30);
+      expect(nav!.y + nav!.height).toBeLessThanOrEqual(layout.viewport.height);
+      expect(nav!.width).toBeLessThanOrEqual(Math.min(760, layout.viewport.width));
 
       await page.getByRole('button', { name: '시작하기 ▶' }).click();
       await page.locator('.talk-input input').fill('ラーメンがすきです。');
       await page.locator('.talk-input input').press('Enter');
       expect(await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth)).toBeLessThanOrEqual(0);
+      // The input must be on screen, above the tab bar, without scrolling.
       const box = await page.locator('.talk-input input').boundingBox();
-      expect(box!.y + box!.height).toBeLessThanOrEqual(layout.viewport.height);
+      expect(box!.y + box!.height).toBeLessThanOrEqual(nav!.y);
       // Wide landscape screens keep the survival panel beside the chat; narrow ones use the sheet button.
       const wide = layout.viewport.width >= 900 && layout.viewport.width > layout.viewport.height;
       await expect(page.locator('.talk-side')).toBeVisible({ visible: wide });
@@ -200,6 +201,8 @@ for (const layout of LAYOUTS) {
         ['dialogue', '/#/practice/6/listen'],
         ['survival', '/#/survival'],
         ['katakana', '/#/katakana'],
+        ['survival-home', '/#/survival'],
+        ['structures', '/#/structures/verb'],
         ['katakana-quiz', '/#/katakana/chars'],
         ['progress', '/#/progress'],
         ['settings', '/#/settings'],
@@ -402,5 +405,35 @@ test.describe('free-talk back-and-forth with ユイ', () => {
     await page.waitForTimeout(3000);
     expect(await page.locator('.timebar-text').textContent()).toBe(before);
     await expect(page.getByText('ユイ가 말하는 중 · 타이머 멈춤')).toBeHidden({ timeout: 10_000 });
+  });
+});
+
+test.describe('books', () => {
+  test.use(TAB_LANDSCAPE);
+
+  test('expression book: sections, category filter, homestay phrases, favorites tab', async ({ page }) => {
+    await seed(page, { sound: false });
+    await page.goto('/#/survival');
+    await expect(page.getByRole('tab', { name: '대화 생존' })).toHaveAttribute('aria-selected', 'true');
+    await page.getByRole('tab', { name: '홈스테이' }).click();
+    await expect(page.locator('.survival-group h4')).toHaveText(['인사', '식사', '부탁·허락', '생활·감사']);
+    await expect(page.getByText('잘 먹겠습니다. (먹기 전)')).toBeVisible();
+    await page.locator('.cat-chips').getByRole('button', { name: '식사' }).click();
+    await expect(page.locator('.survival-group h4')).toHaveText(['식사']);
+    await page.locator('.survival-item', { hasText: '잘 먹겠습니다' }).getByRole('button', { name: '즐겨찾기' }).click();
+    await page.getByRole('tab', { name: '★ 1' }).click();
+    await expect(page.locator('.survival-item')).toHaveCount(1);
+  });
+
+  test('sentence-structure book: sections, tables and examples', async ({ page }) => {
+    await seed(page, { sound: false });
+    await page.goto('/');
+    await page.locator('.nav').getByRole('link', { name: /문장 구조/ }).click();
+    await expect(page.getByRole('heading', { name: '문장 구조' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: '기본 어순' })).toBeVisible();
+    await page.getByRole('tab', { name: '동사' }).click();
+    await expect(page.getByRole('heading', { name: 'て형 만들기' })).toBeVisible();
+    await expect(page.locator('.structure', { hasText: 'て형 만들기' }).locator('.conj tr')).toHaveCount(7);
+    await expect(page.locator('.nav a.on')).toContainText('문장 구조');
   });
 });

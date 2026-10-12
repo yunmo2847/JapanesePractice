@@ -59,7 +59,9 @@ export type Dialogue = {
   quiz: { q: string; options: string[]; answer: number }[];
 };
 
-export type SurvivalCategory = 'stall' | 'paraphrase' | 'check' | 'aizuchi' | 'switch' | 'opinion' | 'feeling';
+export type SurvivalCategory =
+  | 'stall' | 'paraphrase' | 'check' | 'aizuchi' | 'switch' | 'opinion' | 'feeling'
+  | 'home_greet' | 'home_meal' | 'home_ask' | 'home_life';
 
 export type Survival = {
   id: string;
@@ -72,3 +74,17 @@ export type Survival = {
 
 /** `match` (regex on normalized kana) narrows ambiguous forms, e.g. reason-から vs 韓国から. */
 export type Connector = { forms: string[]; ko: string; match?: string };
+
+export type StructureSection = 'order' | 'particle' | 'verb' | 'adj' | 'question' | 'connect' | 'ending' | 'request';
+
+/** One entry of the sentence-structure book. Table cells use the same furigana markup. */
+export type Structure = {
+  id: string;
+  section: StructureSection;
+  title: string;
+  form: string;
+  meaning: string;
+  note: string;
+  table?: [string, string][];
+  examples: JaKo[];
+};

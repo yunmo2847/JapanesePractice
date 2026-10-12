@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { isKana } from 'wanakana';
-import { cards, chains, CONTENT_DAYS, dialogues, patternById, patterns, survival, topics } from '../src/content';
+import { cards, chains, CONTENT_DAYS, dialogues, patternById, patterns, STRUCTURE_SECTIONS, structures, survival, SURVIVAL_SECTIONS, topics } from '../src/content';
 import { blocks, plain, reading, segments } from '../src/lib/furigana';
 import { grade } from '../src/lib/kana';
 
@@ -23,6 +23,10 @@ function allJapanese(): [string, string][] {
   });
   dialogues.forEach((d) => [...d.turns, d.reply].forEach((x) => out.push([d.id, x.ja])));
   survival.forEach((s) => [s.ja, s.example?.ja].forEach((j) => j && out.push([s.id, j])));
+  structures.forEach((x) => {
+    x.examples.forEach((e) => out.push([x.id, e.ja]));
+    x.table?.forEach(([label, ja]) => out.push([x.id, label], [x.id, ja]));
+  });
   return out;
 }
 
@@ -38,7 +42,7 @@ describe('content integrity', () => {
   });
 
   it('uses unique ids', () => {
-    const ids = [cards, patterns, chains, topics, dialogues, survival].flatMap((l) => l.map((x) => x.id));
+    const ids = [cards, patterns, chains, topics, dialogues, survival, structures].flatMap((l) => l.map((x) => x.id));
     expect(new Set(ids).size).toBe(ids.length);
   });
 
@@ -93,6 +97,23 @@ describe('free-talk partner lines', () => {
       expect(plain(t.partner.ja), t.id).not.toMatch(/[?？]$|か。$/);
       expect(t.followUps, t.id).toHaveLength(2);
       for (const f of t.followUps) expect(plain(f.ja), t.id).toMatch(/[?？]$|か。$/);
+    }
+  });
+});
+
+describe('books', () => {
+  it('puts every expression in a section and every section has content', () => {
+    const cats = SURVIVAL_SECTIONS.flatMap((s) => s.cats);
+    for (const x of survival) expect(cats, x.id).toContain(x.cat);
+    for (const c of cats) expect(survival.some((x) => x.cat === c), c).toBe(true);
+    expect(survival.filter((x) => x.cat.startsWith('home_')).length).toBeGreaterThanOrEqual(30);
+  });
+
+  it('fills every sentence-structure section, each entry with examples', () => {
+    for (const s of STRUCTURE_SECTIONS) expect(structures.some((x) => x.section === s.id), s.id).toBe(true);
+    for (const x of structures) {
+      expect(STRUCTURE_SECTIONS.map((s) => s.id), x.id).toContain(x.section);
+      expect(x.examples.length, x.id).toBeGreaterThan(0);
     }
   });
 });
