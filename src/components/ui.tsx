@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { segments } from '../lib/furigana';
 import { speak, stopSpeaking } from '../lib/tts';
 import { useSettings } from '../lib/store';
+import { ArrowRight, Square, Volume2 } from 'lucide-react';
 import { plain } from '../lib/furigana';
 
 /** Japanese text with furigana (ruby) when enabled in settings. */
@@ -45,7 +46,8 @@ export function SpeakButton({ text, label = '듣기', small }: { text: string; l
   };
   return (
     <button type="button" className={`btn ghost ${small ? 'sm' : ''}`} onClick={onClick} aria-label={label}>
-      {playing ? '■ 정지' : `🔊 ${label}`}
+      {playing ? <Square size={16} aria-hidden /> : <Volume2 size={18} strokeWidth={1.75} aria-hidden />}
+      {playing ? '정지' : label}
     </button>
   );
 }
@@ -107,4 +109,9 @@ export function Tag({ children, tone }: { children: ReactNode; tone?: 'accent' |
 
 export function Empty({ children }: { children: ReactNode }) {
   return <div className="empty">{children}</div>;
+}
+
+/** Trailing arrow for "next / start" buttons. */
+export function Next() {
+  return <ArrowRight size={18} aria-hidden />;
 }

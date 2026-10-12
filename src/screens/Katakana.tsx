@@ -4,7 +4,7 @@ import words from '../content/katakanaWords.json';
 import { diff, grade, gradeKatakana, normalize, type Grade } from '../lib/kana';
 import { navigate } from '../lib/router';
 import { useSettings } from '../lib/store';
-import { SpeakButton, Tag, useSpeak } from '../components/ui';
+import { SpeakButton, Tag, useSpeak, Next } from '../components/ui';
 import { KanaInput } from '../components/KanaInput';
 
 type Word = { ja: string; ko: string };
@@ -156,7 +156,7 @@ function CharRound({ pool, onAgain }: { pool: Kana[]; onAgain: () => void }) {
         })}
       </div>
       {picked && (
-        <button className="btn primary lg" autoFocus onClick={() => { setPicked(null); setIndex((i) => i + 1); }}>다음 ▶</button>
+        <button className="btn primary lg" autoFocus onClick={() => { setPicked(null); setIndex((i) => i + 1); }}>다음 <Next /></button>
       )}
     </div>
   );
@@ -232,7 +232,7 @@ function WordRound({ mode, onAgain }: { mode: 'read' | 'write'; onAgain: () => v
           <p>{word.ko}</p>
           <div className="row wrap">
             <SpeakButton text={word.ja} />
-            <button className="btn primary lg" autoFocus onClick={() => { setResult(null); setIndex((i) => i + 1); }}>다음 ▶</button>
+            <button className="btn primary lg" autoFocus onClick={() => { setResult(null); setIndex((i) => i + 1); }}>다음 <Next /></button>
           </div>
         </div>
       )}

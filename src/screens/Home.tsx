@@ -2,7 +2,8 @@ import { byDay, CONTENT_DAYS, DAY_THEME, topics } from '../content';
 import { dayFor, TOTAL_DAYS, weekOf } from '../lib/days';
 import { today, useSettings, useStore } from '../lib/store';
 import { navigate } from '../lib/router';
-import { Ja, Tag } from '../components/ui';
+import { Ja } from '../components/ui';
+import { ArrowRight, Headphones, VolumeX } from 'lucide-react';
 import { estimateMinutes, stepsFor, STEP_LABEL } from './Session';
 
 export function useCurrentDay(): number {
@@ -24,38 +25,38 @@ export function Home() {
 
   return (
     <div className="stack home">
-      <div className="row between wrap">
-        <div>
-          <p className="muted small">Week {weekOf(day)}</p>
-          <h1>Day {day} <span className="muted">/ {TOTAL_DAYS}</span></h1>
+      <section className="hero" aria-label="오늘의 학습">
+        <div className="row between wrap">
+          <span className="hero-meta">Week {weekOf(day)} · {DAY_THEME[day] ?? '콘텐츠 준비 중'}</span>
+          <button className="btn sm hero-toggle" onClick={() => setSettings({ sound: !settings.sound })} aria-pressed={!settings.sound}>
+            {settings.sound ? <Headphones size={16} aria-hidden /> : <VolumeX size={16} aria-hidden />}
+            {settings.sound ? '이어폰 모드' : '소리 끄기 모드'}
+          </button>
         </div>
-        <button className="btn ghost mode-toggle" onClick={() => setSettings({ sound: !settings.sound })} aria-pressed={!settings.sound}>
-          {settings.sound ? '🎧 이어폰 모드' : '🔇 소리 끄기 모드'}
-        </button>
-      </div>
-
-      <div className="panel hero stack">
-        <Tag tone="accent">{DAY_THEME[day] ?? '콘텐츠 준비 중'}</Tag>
+        <h1 className="hero-day">Day {day}<span> / {TOTAL_DAYS}</span></h1>
         {topic ? (
-          <>
-            <p className="muted small">오늘의 프리토킹 주제{day % 7 === 0 ? ' (테스트 3개)' : ''}</p>
+          <div className="stack hero-topic">
+            <p className="hero-meta">오늘의 질문{day % 7 === 0 ? ' · 테스트 3개' : ''}</p>
             <p className="prompt-ja"><Ja text={topic.question.ja} /></p>
             <p className="prompt-ko">{topic.question.ko}</p>
-          </>
+          </div>
         ) : (
           <p>Day {day} 콘텐츠는 아직 준비 중이에요. 연습 화면에서 지난 내용을 복습하세요.</p>
         )}
-        <p className="muted">
-          예상 {estimateMinutes(day, settings.minutes)}분 · {steps.map((s) => STEP_LABEL[s]).join(' → ')}
-        </p>
-        {hasContent ? (
-          <button className="btn primary xl" onClick={() => navigate(`/session/${day}`)}>
-            {finished ? '오늘 학습 다시 보기' : started ? `이어하기 · ${next ? STEP_LABEL[next] : ''}` : '오늘 학습 시작 ▶'}
-          </button>
-        ) : (
-          <button className="btn primary xl" onClick={() => navigate('/practice')}>복습하러 가기</button>
-        )}
-      </div>
+        <div className="hero-foot">
+          <p className="hero-meta">
+            {estimateMinutes(day, settings.minutes)}분 · {steps.map((s) => STEP_LABEL[s]).join(' · ')}
+          </p>
+          {hasContent ? (
+            <button className="btn lime lg" onClick={() => navigate(`/session/${day}`)}>
+              {finished ? '오늘 학습 다시 보기' : started ? `이어하기 · ${next ? STEP_LABEL[next] : ''}` : '오늘 학습 시작'}
+              <ArrowRight size={18} aria-hidden />
+            </button>
+          ) : (
+            <button className="btn lime lg" onClick={() => navigate('/practice')}>복습하러 가기 <ArrowRight size={18} aria-hidden /></button>
+          )}
+        </div>
+      </section>
 
       <div className="panel stack">
         <div className="row between wrap">

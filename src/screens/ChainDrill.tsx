@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import type { Chain } from '../content';
-import { Ja, SpeakButton, Tag, TimeBar, useCountdown } from '../components/ui';
+import { Ja, SpeakButton, Tag, TimeBar, useCountdown, Next } from '../components/ui';
 import { KanaInput } from '../components/KanaInput';
 
 const STEP_SECONDS = 30;
@@ -37,7 +37,7 @@ function ChainSet({ chain, onNext }: { chain: Chain; onNext: () => void }) {
   return (
     <div className="panel stack">
       <div className="row between">
-        <Tag tone="accent">{chain.kind === 'formula' ? '답변 확장 공식' : '이어 쓰기'}</Tag>
+        <span className="eyebrow">{chain.kind === 'formula' ? '답변 확장 공식' : '이어 쓰기'}</span>
         <SpeakButton text={chain.start.ja} small />
       </div>
       <p className="prompt-ja"><Ja text={chain.start.ja} /></p>
@@ -84,7 +84,7 @@ function ChainSet({ chain, onNext }: { chain: Chain; onNext: () => void }) {
               <div className="row wrap">
                 <SpeakButton text={link.example.ja} small />
                 <button className="btn primary" autoFocus onClick={() => { setRevealed(false); setStep((s) => s + 1); }}>
-                  {step + 1 < chain.links.length ? '다음 단계 ▶' : '완성본 보기 ▶'}
+                  {step + 1 < chain.links.length ? '다음 단계' : '완성본 보기'} <Next />
                 </button>
               </div>
             </div>
@@ -99,7 +99,7 @@ function ChainSet({ chain, onNext }: { chain: Chain; onNext: () => void }) {
           <div className="row wrap">
             <SpeakButton text={fullModel} label="완성본 듣기" />
             {mine.some(Boolean) && <SpeakButton text={mine.filter(Boolean).join('。')} label="내 문장 듣기" />}
-            <button className="btn primary lg" onClick={onNext}>다음 세트 ▶</button>
+            <button className="btn primary lg" onClick={onNext}>다음 세트 <Next /></button>
           </div>
         </div>
       )}

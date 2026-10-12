@@ -1,13 +1,13 @@
 import { useState } from 'react';
 import type { Pattern } from '../content';
-import { Ja, SpeakButton, Tag, useSpeak } from '../components/ui';
+import { Ja, SpeakButton, Tag, useSpeak, Next } from '../components/ui';
 import { useSettings } from '../lib/store';
 
 export function PatternList({ patterns, onDone }: { patterns: Pattern[]; onDone?: () => void }) {
   return (
     <div className="stack">
       {patterns.map((p) => <PatternCard key={p.id} pattern={p} />)}
-      {onDone && <button className="btn primary lg" onClick={onDone}>다음으로 ▶</button>}
+      {onDone && <button className="btn primary lg" onClick={onDone}>다음으로 <Next /></button>}
     </div>
   );
 }

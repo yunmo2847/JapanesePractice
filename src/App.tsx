@@ -10,14 +10,15 @@ import { Katakana } from './screens/Katakana';
 import { Structures } from './screens/Structures';
 import { SurvivalList } from './components/SurvivalList';
 import { NO_JA_VOICE } from './lib/tts';
+import { ChartColumn, House, MessageSquareText, PenLine, Puzzle, Settings as SettingsIcon } from 'lucide-react';
 
 const NAV = [
-  { path: '', icon: '🏠', label: '홈' },
-  { path: 'practice', icon: '✏️', label: '연습' },
-  { path: 'survival', icon: '💬', label: '표현집' },
-  { path: 'structures', icon: '🧩', label: '문장 구조' },
-  { path: 'progress', icon: '📈', label: '진도' },
-  { path: 'settings', icon: '⚙️', label: '설정' },
+  { path: '', icon: House, label: '홈' },
+  { path: 'practice', icon: PenLine, label: '연습' },
+  { path: 'survival', icon: MessageSquareText, label: '표현집' },
+  { path: 'structures', icon: Puzzle, label: '문장 구조' },
+  { path: 'progress', icon: ChartColumn, label: '진도' },
+  { path: 'settings', icon: SettingsIcon, label: '설정' },
 ];
 
 export function App() {
@@ -47,7 +48,7 @@ export function App() {
         return (
           <div className="stack">
             <h1>생존 표현집</h1>
-            <p className="muted">대화하다 막힐 때 쓰는 표현과 홈스테이 생활 표현이에요. ☆를 누르면 ★ 탭에 모여요 (채팅 화면에서도 볼 수 있어요).</p>
+            <p className="muted">대화가 막힐 때 꺼내 쓰는 표현과 홈스테이 생활 표현.</p>
             <SurvivalList />
           </div>
         );
@@ -69,7 +70,7 @@ export function App() {
       <nav className="nav" aria-label="메뉴">
         {NAV.map((n) => (
           <a key={n.label} href={`#/${n.path}`} className={section === n.path || (n.path === '' && section === 'session') || (n.path === 'practice' && section === 'katakana') ? 'on' : ''}>
-            <span className="nav-icon" aria-hidden>{n.icon}</span>
+            <n.icon className="nav-icon" size={20} strokeWidth={1.75} aria-hidden />
             <span className="nav-label">{n.label}</span>
           </a>
         ))}

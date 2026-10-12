@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Copy, Download, Flag, Upload } from 'lucide-react';
 import { cards, topics } from '../content';
 import { TOTAL_DAYS } from '../lib/days';
 import { exportCode, importCode, useStore, type FreeTalk } from '../lib/store';
@@ -59,7 +60,7 @@ export function Progress() {
 
       {state.flags.length > 0 && (
         <div className="panel stack">
-          <h3>🚩 이상하다고 표시한 카드</h3>
+          <h3 className="heading-icon"><Flag size={18} aria-hidden /> 이상하다고 표시한 카드</h3>
           <ul className="plain-list">{state.flags.map((f, i) => <li key={i}>{f.id} {f.note && <span lang="ja">· 내 답: {f.note}</span>} <span className="muted small">{f.at}</span></li>)}</ul>
         </div>
       )}
@@ -148,10 +149,10 @@ function Backup() {
       <h3>진도 내보내기 / 가져오기</h3>
       <p className="muted small">로그인이 없어서 진도는 이 기기에만 저장돼요. 다른 기기로 옮길 때 사용하세요. (녹음은 없으므로 텍스트 진도만 옮겨져요)</p>
       <div className="row wrap">
-        <button className="btn" onClick={download}>📄 파일로 내보내기</button>
-        <button className="btn" onClick={copy}>📋 코드 복사</button>
+        <button className="btn" onClick={download}><Download size={18} aria-hidden /> 파일로 내보내기</button>
+        <button className="btn" onClick={copy}><Copy size={18} aria-hidden /> 코드 복사</button>
         <label className="btn">
-          📂 파일 가져오기
+          <Upload size={18} aria-hidden /> 파일 가져오기
           <input type="file" accept="application/json,.json" hidden onChange={async (e) => {
             const f = e.target.files?.[0];
             if (f) restore(await f.text());

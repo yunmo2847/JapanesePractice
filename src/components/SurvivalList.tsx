@@ -3,6 +3,7 @@ import { survival, SURVIVAL_LABEL, SURVIVAL_SECTIONS, type SurvivalCategory } fr
 import { plain } from '../lib/furigana';
 import { useStore } from '../lib/store';
 import { Ja, SpeakButton, Tag } from './ui';
+import { Star } from 'lucide-react';
 
 const REGISTER = { polite: '정중', casual: '반말', both: '공통' } as const;
 const FAVORITES = 'fav';
@@ -25,7 +26,7 @@ export function SurvivalList({ onPick, compact }: { onPick?: (text: string) => v
   const current = SURVIVAL_SECTIONS.find((s) => s.id === section);
   const groups: [string, typeof survival][] =
     section === FAVORITES
-      ? [['★ 즐겨찾기', survival.filter((x) => favs.has(x.id))]]
+      ? [['즐겨찾기', survival.filter((x) => favs.has(x.id))]]
       : (current?.cats ?? [])
           .filter((c) => cat === 'all' || c === cat)
           .map((c) => [SURVIVAL_LABEL[c], survival.filter((x) => x.cat === c)]);
@@ -43,8 +44,8 @@ export function SurvivalList({ onPick, compact }: { onPick?: (text: string) => v
             {s.label}
           </button>
         ))}
-        <button role="tab" aria-selected={section === FAVORITES} className={section === FAVORITES ? 'on' : ''} onClick={() => pickSection(FAVORITES)}>
-          ★ {favs.size}
+        <button role="tab" aria-selected={section === FAVORITES} aria-label={`즐겨찾기 ${favs.size}`} className={section === FAVORITES ? 'on' : ''} onClick={() => pickSection(FAVORITES)}>
+          <Star size={16} aria-hidden /> {favs.size}
         </button>
       </div>
 
@@ -60,7 +61,7 @@ export function SurvivalList({ onPick, compact }: { onPick?: (text: string) => v
       )}
 
       {section === FAVORITES && favs.size === 0 && (
-        <p className="muted small">☆를 눌러 자주 쓰는 표현을 모아 두세요.</p>
+        <p className="muted small">별을 눌러 자주 쓰는 표현을 모아 두세요.</p>
       )}
 
       {groups.map(([label, items]) => (
@@ -91,7 +92,7 @@ export function SurvivalList({ onPick, compact }: { onPick?: (text: string) => v
                   </div>
                 )}
                 <button className={`star ${favs.has(x.id) ? 'on' : ''}`} onClick={() => toggle(x.id)} aria-label="즐겨찾기">
-                  {favs.has(x.id) ? '★' : '☆'}
+                  <Star size={20} strokeWidth={1.75} fill={favs.has(x.id) ? 'currentColor' : 'none'} aria-hidden />
                 </button>
               </li>
             ))}

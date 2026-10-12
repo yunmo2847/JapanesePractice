@@ -1,9 +1,10 @@
 import { useMemo } from 'react';
+import { Check } from 'lucide-react';
 import { byDay, cards, chains, CONTENT_DAYS, DAY_THEME, dialogues, patterns, topics } from '../content';
 import { isTestDay } from '../lib/days';
 import { today, useSettings, useStore } from '../lib/store';
 import { navigate } from '../lib/router';
-import { Empty, Tag } from '../components/ui';
+import { Empty, Tag, Next } from '../components/ui';
 import { CardDrill, useTodayCards } from './CardDrill';
 import { PatternList } from './PatternView';
 import { DialogueView } from './DialogueView';
@@ -106,7 +107,7 @@ export function Session({ day }: { day: number }) {
         <ol className="steps" aria-label="오늘의 단계">
           {steps.map((s) => (
             <li key={s} className={done.includes(s) ? 'done' : s === current ? 'now' : ''}>
-              {done.includes(s) ? '✓ ' : ''}{STEP_LABEL[s]}
+              {done.includes(s) && <Check size={14} strokeWidth={2.5} aria-hidden />}{STEP_LABEL[s]}
             </li>
           ))}
         </ol>
@@ -121,7 +122,7 @@ function Skip({ text, onSkip }: { text: string; onSkip: () => void }) {
     <Empty>
       {text}
       <br />
-      <button className="btn primary" onClick={onSkip}>다음 단계로 ▶</button>
+      <button className="btn primary" onClick={onSkip}>다음 단계로 <Next /></button>
     </Empty>
   );
 }
@@ -133,7 +134,7 @@ function Finished({ day }: { day: number }) {
   const asked = talks.some((f) => f.report.askedBack);
   return (
     <div className="panel center stack">
-      <h2>🎉 Day {day} 완료!</h2>
+      <h2>Day {day} 완료</h2>
       <p>오늘 프리토킹 최고 <b>{best}문장</b> · 되묻기 {asked ? <Tag tone="good">성공</Tag> : <Tag tone="bad">다음엔 꼭</Tag>}</p>
       <div className="row wrap center">
         <button className="btn" onClick={() => navigate('/progress')}>진도 보기</button>

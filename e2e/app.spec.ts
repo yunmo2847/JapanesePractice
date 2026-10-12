@@ -18,7 +18,7 @@ test.describe('Day 1 session on a tablet', () => {
     await seed(page, { sound: false, minutes: 30 });
     await page.goto('/');
     await expect(page.getByRole('heading', { name: /Day 1/ })).toBeVisible();
-    await page.getByRole('button', { name: '오늘 학습 시작 ▶' }).click();
+    await page.getByRole('button', { name: '오늘 학습 시작' }).click();
 
     // F2 cards: the first one typed in romaji to exercise the in-app kana conversion (F0).
     const day1 = cards.filter((c) => c.day === 1);
@@ -27,24 +27,24 @@ test.describe('Day 1 session on a tablet', () => {
     await expect(input).toHaveValue('はじめまして');
     await page.getByRole('button', { name: '확인' }).click();
     await expect(page.getByText('정답!')).toBeVisible();
-    await page.getByRole('button', { name: '다음 ▶' }).click();
+    await page.getByRole('button', { name: '다음' }).click();
 
     for (const card of day1.slice(1)) {
       await input.fill(reading(card.ja));
       await page.getByRole('button', { name: '확인' }).click();
       await expect(page.getByText('정답!')).toBeVisible();
-      await page.getByRole('button', { name: '다음 ▶' }).click();
+      await page.getByRole('button', { name: '다음' }).click();
     }
     await expect(page.getByText('카드 완료')).toBeVisible();
     await page.getByRole('button', { name: '다음으로' }).click();
 
     // F7 patterns
     await expect(page.getByRole('heading', { name: 'A는 B예요' })).toBeVisible();
-    await page.getByRole('button', { name: '다음으로 ▶' }).click();
+    await page.getByRole('button', { name: '다음으로' }).click();
 
     // F1 free talk
     await page.getByRole('button', { name: '30초' }).click();
-    await page.getByRole('button', { name: '시작하기 ▶' }).click();
+    await page.getByRole('button', { name: '시작하기' }).click();
     const talk = page.locator('.talk-input input');
     for (const line of ['はじめまして。キムです。', 'かんこくからきました。でも、にほんごはまだしょしんしゃです。', 'ユイさんもがくせいですか？']) {
       await talk.fill(line);
@@ -59,9 +59,9 @@ test.describe('Day 1 session on a tablet', () => {
     await expect(page.locator('.stat', { hasText: '문장 (목표 3)' })).toContainText('5');
     await expect(page.locator('.stat', { hasText: '되묻기' })).toContainText('했음');
     await expect(page.locator('.stat', { hasText: '접속 표현' })).toContainText('1');
-    await page.getByRole('button', { name: '완료 ▶' }).click();
+    await page.getByRole('button', { name: '완료' }).click();
 
-    await expect(page.getByText('Day 1 완료!')).toBeVisible();
+    await expect(page.getByText('Day 1 완료')).toBeVisible();
     await page.getByRole('button', { name: '홈으로' }).click();
     await expect(page.getByRole('button', { name: '오늘 학습 다시 보기' })).toBeVisible();
 
@@ -94,13 +94,13 @@ test.describe('Day 1 session on a tablet', () => {
     await expect(page.locator('.kana-input input')).toBeVisible();
     await page.locator('.kana-input input').fill('はじめまして');
     await page.getByRole('button', { name: '확인' }).click();
-    await page.getByRole('button', { name: '다음 ▶' }).click();
+    await page.getByRole('button', { name: '다음' }).click();
 
     // Card 2: よろしく | お願いします — tap in order.
     await page.locator('.block-pool .block', { hasText: 'よろしく' }).click();
     await page.locator('.block-pool .block', { hasText: '願' }).click();
     await expect(page.getByText('정답!')).toBeVisible();
-    await page.getByRole('button', { name: '다음 ▶' }).click();
+    await page.getByRole('button', { name: '다음' }).click();
 
     await page.getByRole('button', { name: '속으로' }).click();
     await page.getByRole('button', { name: '정답 보기' }).click();
@@ -111,7 +111,7 @@ test.describe('Day 1 session on a tablet', () => {
   test('free talk waits for the spoken question before the timer starts', async ({ page }) => {
     await seed(page, { sound: true });
     await page.goto('/#/practice/1/talk/t-intro');
-    await page.getByRole('button', { name: '시작하기 ▶' }).click();
+    await page.getByRole('button', { name: '시작하기' }).click();
     // The test browser has no Japanese voice: speech ends at once (or via the guard timer) and the clock starts.
     await expect(page.getByText('질문을 듣는 중')).toBeHidden({ timeout: 30_000 });
     // 10 s without typing → stalling phrases appear; tapping one inserts it.
@@ -150,7 +150,7 @@ test.describe('Day 1 session on a tablet', () => {
     await seed(page, { sound: false });
     await page.goto('/#/progress');
     await page.context().grantPermissions(['clipboard-read', 'clipboard-write']);
-    await page.getByRole('button', { name: '📋 코드 복사' }).click();
+    await page.getByRole('button', { name: '코드 복사' }).click();
     const code = await page.locator('textarea').inputValue();
     expect(code.length).toBeGreaterThan(20);
     page.once('dialog', (d) => d.accept());
@@ -181,7 +181,7 @@ for (const layout of LAYOUTS) {
       expect(nav!.y + nav!.height).toBeLessThanOrEqual(layout.viewport.height);
       expect(nav!.width).toBeLessThanOrEqual(Math.min(760, layout.viewport.width));
 
-      await page.getByRole('button', { name: '시작하기 ▶' }).click();
+      await page.getByRole('button', { name: '시작하기' }).click();
       await page.locator('.talk-input input').fill('ラーメンがすきです。');
       await page.locator('.talk-input input').press('Enter');
       expect(await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth)).toBeLessThanOrEqual(0);
@@ -291,7 +291,7 @@ test.describe('TTS speaks Japanese only', () => {
     await seed(page, { sound: true });
     await fakeSpeech(page, [{ name: 'Samsung Korean', lang: 'ko_KR' }, { name: 'Google 日本語', lang: 'ja_JP' }], 0);
     await page.goto('/#/settings');
-    await page.getByRole('button', { name: '🔊 음성 테스트' }).click();
+    await page.getByRole('button', { name: '음성 테스트' }).click();
     await expect(page.getByRole('status').filter({ hasText: '재생 끝' })).toBeVisible();
     await page.getByText('소리가 안 날 때 진단 정보').click();
     await expect(page.getByText('브라우저가 알려준 음성: 2개 (일본어 1개)')).toBeVisible();
@@ -301,7 +301,7 @@ test.describe('TTS speaks Japanese only', () => {
     await seed(page, { sound: false });
     await fakeSpeech(page, [{ name: 'Google 日本語', lang: 'ja-JP' }], 0);
     await page.goto('/#/practice/3/talk/t-food');
-    await page.getByRole('button', { name: '시작하기 ▶' }).click();
+    await page.getByRole('button', { name: '시작하기' }).click();
     const talk = page.locator('.talk-input input');
     await talk.fill('ラーメンがすきです。');
     await talk.press('Enter');
@@ -331,7 +331,7 @@ test.describe('katakana', () => {
     const shown = (await page.locator('.kana-quiz').textContent())!;
     await page.getByRole('button', { name: romajiOf.get(shown)!, exact: true }).click();
     await expect(page.locator('.quiz-options .btn.good')).toHaveText(romajiOf.get(shown)!);
-    await page.getByRole('button', { name: '다음 ▶' }).click();
+    await page.getByRole('button', { name: '다음' }).click();
     await expect(page.getByText('2 / 20')).toBeVisible();
 
     // Writing: romaji typed in the katakana box turns into katakana.
@@ -357,7 +357,7 @@ test.describe('free-talk back-and-forth with ユイ', () => {
   test('ユイ reacts after a pause, follows up, answers when asked back, and it all lands in the report', async ({ page }) => {
     await seed(page, { sound: false });
     await page.goto('/#/practice/3/talk/t-food');
-    await page.getByRole('button', { name: '시작하기 ▶' }).click();
+    await page.getByRole('button', { name: '시작하기' }).click();
     const talk = page.locator('.talk-input input');
     const yui = page.locator('.bubble.them');
 
@@ -377,10 +377,10 @@ test.describe('free-talk back-and-forth with ユイ', () => {
     // Asking back + the manual button: she answers about herself, then asks the next one.
     await talk.fill('はい。ユイさんは？');
     await talk.press('Enter');
-    await page.getByRole('button', { name: 'ユイ 차례 ▶' }).click();
+    await page.getByRole('button', { name: 'ユイ 차례' }).click();
     await expect(page.getByText('저는 초밥을 좋아해요. 하지만 매운 건 잘 못 먹어요.')).toBeVisible();
     await expect(page.getByText('한국에서 추천하는 음식은 뭐예요?')).toBeVisible();
-    await expect(page.getByRole('button', { name: 'ユイ 차례 ▶' })).toBeDisabled();
+    await expect(page.getByRole('button', { name: 'ユイ 차례' })).toBeDisabled();
 
     await page.getByRole('button', { name: '끝내기' }).click();
     await expect(page.getByRole('heading', { name: '대화 기록' })).toBeVisible();
@@ -394,12 +394,12 @@ test.describe('free-talk back-and-forth with ユイ', () => {
     await seed(page, { sound: true });
     await fakeSpeech(page, [{ name: 'Google 日本語', lang: 'ja-JP' }], 0, 2500); // each sentence takes 2.5 s
     await page.goto('/#/practice/3/talk/t-food');
-    await page.getByRole('button', { name: '시작하기 ▶' }).click();
+    await page.getByRole('button', { name: '시작하기' }).click();
     await expect(page.getByText('질문을 듣는 중')).toBeHidden({ timeout: 10_000 });
     const talk = page.locator('.talk-input input');
     await talk.fill('ラーメンがすきです。');
     await talk.press('Enter');
-    await page.getByRole('button', { name: 'ユイ 차례 ▶' }).click();
+    await page.getByRole('button', { name: 'ユイ 차례' }).click();
     await expect(page.getByText('ユイ가 말하는 중 · 타이머 멈춤')).toBeVisible();
     const before = await page.locator('.timebar-text').textContent();
     await page.waitForTimeout(3000);
@@ -425,7 +425,7 @@ test.describe('books', () => {
     await page.locator('.cat-chips').getByRole('button', { name: '식사' }).click();
     await expect(page.locator('.survival-group h4')).toHaveText(['식사']);
     await page.locator('.survival-item', { hasText: '잘 먹겠습니다' }).getByRole('button', { name: '즐겨찾기' }).click();
-    await page.getByRole('tab', { name: '★ 1' }).click();
+    await page.getByRole('tab', { name: '즐겨찾기 1' }).click();
     await expect(page.locator('.survival-item')).toHaveCount(1);
   });
 

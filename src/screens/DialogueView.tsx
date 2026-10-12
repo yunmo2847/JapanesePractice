@@ -1,10 +1,11 @@
 import { useEffect, useRef, useState } from 'react';
+import { PenLine, Play, Square, Volume2 } from 'lucide-react';
 import type { Card, Dialogue } from '../content';
 import { plain } from '../lib/furigana';
 import { diff, grade } from '../lib/kana';
 import { speak, stopSpeaking } from '../lib/tts';
 import { useSettings, useStore } from '../lib/store';
-import { Ja, SpeakButton, Tag, TimeBar, useCountdown } from '../components/ui';
+import { Ja, SpeakButton, Tag, TimeBar, useCountdown, Next } from '../components/ui';
 import { KanaInput } from '../components/KanaInput';
 
 const PITCH = { ユイ: 1.15, ケン: 0.85 };
@@ -66,11 +67,11 @@ export function DialogueView({ dialogue: d, day, onDone }: { dialogue: Dialogue;
       <div className="panel stack">
         <div className="row between wrap">
           <h2>{d.title}</h2>
-          <Tag tone="accent">듣기 → 반응</Tag>
+          <span className="eyebrow">듣기 → 반응</span>
         </div>
         <p className="muted">{d.scene}</p>
         <div className="row wrap">
-          <button className="btn primary" onClick={playAll}>{playing !== null ? '■ 정지' : '▶ 전체 듣기'}</button>
+          <button className="btn primary" onClick={playAll}>{playing !== null ? <><Square size={16} aria-hidden /> 정지</> : <><Play size={16} aria-hidden /> 전체 듣기</>}</button>
           <div className="seg" aria-label="속도">
             {[0.7, 0.85, 1, 1.2].map((r) => (
               <button key={r} className={settings.rate === r ? 'on' : ''} onClick={() => setSettings({ rate: r })}>{r}×</button>
@@ -84,7 +85,7 @@ export function DialogueView({ dialogue: d, day, onDone }: { dialogue: Dialogue;
             ))}
           </div>
           <button className={`btn ghost sm ${dictation ? 'on' : ''}`} onClick={() => setDictation((x) => !x)} aria-pressed={dictation}>
-            ✍ 받아쓰기 {dictation ? 'ON' : 'OFF'}
+            <PenLine size={16} aria-hidden /> 받아쓰기 {dictation ? 'ON' : 'OFF'}
           </button>
         </div>
         <p className="muted small">턴을 탭하면 그 문장만 재생 · 길게 누르면 인출 카드로 추가</p>
@@ -130,7 +131,7 @@ export function DialogueView({ dialogue: d, day, onDone }: { dialogue: Dialogue;
         ))}
       </div>
 
-      {onDone && <button className="btn primary lg" onClick={onDone}>다음으로 ▶</button>}
+      {onDone && <button className="btn primary lg" onClick={onDone}>다음으로 <Next /></button>}
     </div>
   );
 }
@@ -170,11 +171,11 @@ function Turn({ turn, index, active, subs, dictation, onPlay, onLongPress }: {
       >
         <span className="who">{turn.speaker}</span>
         {dictation && typed === null ? (
-          <span className="muted">🔊 듣고 아래에 받아쓰세요</span>
+          <span className="muted"><Volume2 size={18} aria-hidden /> 듣고 아래에 받아쓰세요</span>
         ) : subs < 2 || (dictation && typed !== null) ? (
           <Ja text={turn.ja} />
         ) : (
-          <span className="muted">🔊 (자막 없음)</span>
+          <span className="muted"><Volume2 size={18} aria-hidden /> 자막 없음</span>
         )}
         {subs === 0 && !dictation && <span className="muted small">{turn.ko}</span>}
       </button>

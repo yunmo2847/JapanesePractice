@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { LifeBuoy } from 'lucide-react';
 import { connectors, patternById, type JaKo, type Topic } from '../content';
 import { plain } from '../lib/furigana';
 import { analyze, type Report } from '../lib/report';
@@ -7,7 +8,7 @@ import { today, useSettings, useStore, type FreeTalk as FreeTalkRecord } from '.
 import { speak, stopSpeaking } from '../lib/tts';
 import { initialPartner, partnerTurn, type PartnerState } from '../lib/partner';
 import { useKeyboardOpen } from '../lib/useKeyboardOpen';
-import { Ja, Sheet, SpeakButton, Tag, TimeBar, useCountdown } from '../components/ui';
+import { Ja, Sheet, SpeakButton, Tag, TimeBar, useCountdown, Next } from '../components/ui';
 import { KanaInput, type KanaInputHandle } from '../components/KanaInput';
 import { SurvivalList } from '../components/SurvivalList';
 
@@ -63,7 +64,7 @@ function Intro({ topic, round, seconds, setSeconds, onStart }: {
   return (
     <div className="panel stack">
       <div className="row between">
-        <Tag tone="accent">프리토킹 {round === 2 ? '2회차' : ''}</Tag>
+        <span className="eyebrow">프리토킹{round === 2 ? ' · 2회차' : ''}</span>
         <SpeakButton text={topic.question.ja} label="질문 듣기" small />
       </div>
       <p className="prompt-ja">
@@ -89,7 +90,7 @@ function Intro({ topic, round, seconds, setSeconds, onStart }: {
       </button>
       {hints && <Hints topic={topic} />}
       <button className="btn primary lg" onClick={onStart}>
-        시작하기 ▶
+        시작하기 <Next />
       </button>
     </div>
   );
@@ -260,9 +261,9 @@ function Talk({ topic, seconds, onFinish }: {
               setActivity((a) => a + 1);
             }} />
           <div className="row between wrap">
-            <button className="btn ghost sm survival-toggle" onClick={() => setSheet(true)}>🆘 생존 표현</button>
+            <button className="btn ghost sm survival-toggle" onClick={() => setSheet(true)}><LifeBuoy size={16} aria-hidden /> 생존 표현</button>
             <button className="btn sm" onClick={partnerTurnNow} disabled={!pending.length || speaking || ended}>
-              ユイ 차례 ▶
+              ユイ 차례 <Next />
             </button>
             <button className="btn ghost sm" onClick={end}>끝내기</button>
           </div>
@@ -389,7 +390,7 @@ function ReportView({ topic, day, rounds, onRetry, onDone }: {
 
       <div className="row wrap end">
         {onRetry && <button className="btn lg" onClick={onRetry}>모범 답안 보고 다시 대답하기</button>}
-        {onDone && <button className="btn primary lg" onClick={onDone}>완료 ▶</button>}
+        {onDone && <button className="btn primary lg" onClick={onDone}>완료 <Next /></button>}
       </div>
     </div>
   );

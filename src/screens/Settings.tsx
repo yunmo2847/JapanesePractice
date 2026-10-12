@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Volume2 } from 'lucide-react';
 import { initialState, useSettings, useStore, type OutputMode } from '../lib/store';
 import { speak, ttsSupported, useVoices } from '../lib/tts';
 
@@ -40,7 +41,7 @@ export function Settings() {
             setStatus('준비 중…');
             speak('こんにちは、よろしくお願いします。', { rate: s.rate, voice: s.voice, onStatus: setStatus });
           }}>
-            🔊 음성 테스트
+            <Volume2 size={18} aria-hidden /> 음성 테스트
           </button>
           {status && <span className="small" role="status">{status}</span>}
         </div>

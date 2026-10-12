@@ -82,7 +82,8 @@ export async function speak(text: string, opts: SpeakOptions): Promise<void> {
     // Chrome drops an utterance queued right after cancel(); give it a moment.
     await new Promise((r) => setTimeout(r, 80));
   }
-  const parts = speakable(text).split(/(?<=[。！？!?])/).map((p) => p.trim()).filter(Boolean);
+  // Sentence by sentence; fragments that are only punctuation (e.g. left after dropping Hangul) are skipped.
+  const parts = speakable(text).split(/(?<=[。！？!?])/).map((p) => p.trim()).filter((p) => /[^\s。、！？!?…]/.test(p));
   if (!parts.length) return;
   const voice = await chooseVoice(opts.voice);
   if (gen !== generation) return;

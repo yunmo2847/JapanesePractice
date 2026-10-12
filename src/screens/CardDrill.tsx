@@ -1,10 +1,11 @@
 import { useEffect, useMemo, useState } from 'react';
+import { Flag } from 'lucide-react';
 import { SKILL_LABEL, type Card } from '../content';
 import { blocks, plain } from '../lib/furigana';
 import { diff, grade, type Grade } from '../lib/kana';
 import { rate, type Rating } from '../lib/srs';
 import { today, useSettings, useStore, type OutputMode } from '../lib/store';
-import { Ja, SpeakButton, Tag, TimeBar, useCountdown, useSpeak } from '../components/ui';
+import { Ja, SpeakButton, Tag, TimeBar, useCountdown, useSpeak, Next } from '../components/ui';
 import { KanaInput } from '../components/KanaInput';
 
 const limitFor = (card: Card) => (plain(card.ja).length <= 8 ? 10 : 15);
@@ -124,10 +125,7 @@ function CardView({ card, mode, onRated }: { card: Card; mode: OutputMode; onRat
 
   return (
     <div className="panel stack card-view">
-      <div className="row between">
-        <Tag tone="accent">{SKILL_LABEL[card.skill]}</Tag>
-        <Tag>{card.register === 'polite' ? '정중체' : '반말'}</Tag>
-      </div>
+      <p className="eyebrow">{SKILL_LABEL[card.skill]} · {card.register === 'polite' ? '정중체' : '반말'}</p>
       <p className="prompt-ko">{card.ko}</p>
       {!result && <TimeBar left={left} total={limit} />}
 
@@ -187,10 +185,10 @@ function CardView({ card, mode, onRated }: { card: Card; mode: OutputMode; onRat
           <div className="row wrap">
             <SpeakButton text={card.ja} />
             <button className="btn ghost sm" onClick={flag} title="정답이 이상하거나, 내 답도 맞는 것 같을 때">
-              🚩 이상해요
+              <Flag size={16} aria-hidden /> 이상해요
             </button>
           </div>
-          {card.nuance && <p className="nuance">💡 {card.nuance}</p>}
+          {card.nuance && <p className="nuance">{card.nuance}</p>}
           <RatingButtons result={result} onRated={onRated} />
         </div>
       )}
@@ -215,14 +213,14 @@ function RatingButtons({ result, onRated }: { result: Result; onRated: (r: Ratin
   if (grade === 'correct') {
     return (
       <button className="btn primary lg" autoFocus onClick={() => onRated(inTime ? 'good' : 'ok', inTime)}>
-        다음 ▶
+        다음 <Next />
       </button>
     );
   }
   if (grade === 'wrong') {
     return (
       <button className="btn primary lg" autoFocus onClick={() => onRated('bad', false)}>
-        다음 ▶ (다시 나와요)
+        다음 (다시 나와요) <Next />
       </button>
     );
   }

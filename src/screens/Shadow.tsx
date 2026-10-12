@@ -1,8 +1,9 @@
 import { useEffect, useRef, useState } from 'react';
+import { Play, Square } from 'lucide-react';
 import { plain } from '../lib/furigana';
 import { speak, stopSpeaking } from '../lib/tts';
 import { useSettings } from '../lib/store';
-import { Ja } from '../components/ui';
+import { Ja, Next } from '../components/ui';
 
 /** Silent shadowing: listen and only move your lips along (plan 3.3 step 6). */
 export function Shadow({ lines, onDone }: { lines: string[]; onDone: () => void }) {
@@ -45,8 +46,8 @@ export function Shadow({ lines, onDone }: { lines: string[]; onDone: () => void 
         {lines.map((l, i) => <li key={i} className={now === i ? 'active' : ''}><Ja text={l} /></li>)}
       </ol>
       <div className="row wrap end">
-        <button className="btn" onClick={play}>{now !== null ? '■ 정지' : '▶ 시작'}</button>
-        <button className="btn primary lg" onClick={() => { stopSpeaking(); onDone(); }}>다음으로 ▶</button>
+        <button className="btn" onClick={play}>{now !== null ? <><Square size={16} aria-hidden /> 정지</> : <><Play size={16} aria-hidden /> 시작</>}</button>
+        <button className="btn primary lg" onClick={() => { stopSpeaking(); onDone(); }}>다음으로 <Next /></button>
       </div>
     </div>
   );
