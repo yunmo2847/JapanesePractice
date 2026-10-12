@@ -112,7 +112,7 @@ export function Session({ day }: { day: number }) {
           ))}
         </ol>
       </header>
-      {body}
+      <div className="page" key={current ?? 'done'}>{body}</div>
     </div>
   );
 }

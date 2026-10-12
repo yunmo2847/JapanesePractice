@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, type CSSProperties } from 'react';
 import { useSettings } from './lib/store';
 import { useRoute } from './lib/router';
 import { Home } from './screens/Home';
@@ -9,6 +9,7 @@ import { Settings } from './screens/Settings';
 import { Katakana } from './screens/Katakana';
 import { Structures } from './screens/Structures';
 import { SurvivalList } from './components/SurvivalList';
+import { Splash } from './components/Splash';
 import { NO_JA_VOICE } from './lib/tts';
 import { ChartColumn, House, MessageSquareText, PenLine, Puzzle, Settings as SettingsIcon } from 'lucide-react';
 
@@ -37,6 +38,10 @@ export function App() {
     if (settings.theme === 'system') document.documentElement.removeAttribute('data-theme');
     else document.documentElement.dataset.theme = settings.theme;
   }, [settings.theme]);
+
+  const isActive = (path: string) =>
+    section === path || (path === '' && section === 'session') || (path === 'practice' && section === 'katakana');
+  const activeIndex = NAV.findIndex((n) => isActive(n.path));
 
   const screen = (() => {
     switch (section) {
@@ -67,9 +72,11 @@ export function App() {
 
   return (
     <div className={`app ${section === 'session' ? 'in-session' : ''}`}>
-      <nav className="nav" aria-label="메뉴">
+      <Splash />
+      <nav className="nav" aria-label="메뉴" style={{ '--count': NAV.length } as CSSProperties}>
+        {activeIndex >= 0 && <span className="nav-indicator" style={{ '--i': activeIndex } as CSSProperties} aria-hidden />}
         {NAV.map((n) => (
-          <a key={n.label} href={`#/${n.path}`} className={section === n.path || (n.path === '' && section === 'session') || (n.path === 'practice' && section === 'katakana') ? 'on' : ''}>
+          <a key={n.label} href={`#/${n.path}`} className={isActive(n.path) ? 'on' : ''}>
             <n.icon className="nav-icon" size={20} strokeWidth={1.75} aria-hidden />
             <span className="nav-label">{n.label}</span>
           </a>
@@ -87,7 +94,8 @@ export function App() {
             </div>
           </div>
         )}
-        {screen}
+        {/* Re-keyed per route so every screen change replays the entrance animation. */}
+        <div className="page" key={route.join('/')}>{screen}</div>
       </main>
     </div>
   );

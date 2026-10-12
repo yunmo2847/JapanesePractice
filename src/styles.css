@@ -382,3 +382,68 @@ details summary { cursor: pointer; min-height: 44px; display: flex; align-items:
 .conj th { color: var(--muted); font-weight: 500; font-size: 0.88rem; width: 42%; }
 .tip { grid-column: 1 / -1; background: var(--warn-soft); border-radius: 12px; padding: 8px 12px; line-height: 1.65; }
 .tip b { color: var(--warn); margin-right: 6px; font-weight: 600; }
+
+/* ---------- motion ---------- */
+/* One easing for everything: quick start, soft landing. */
+:root { --ease: cubic-bezier(0.2, 0.8, 0.2, 1); }
+
+@keyframes rise { from { opacity: 0; transform: translateY(12px); } }
+@keyframes fade { from { opacity: 0; } }
+@keyframes pop { from { opacity: 0; transform: scale(0.94); } }
+@keyframes grow { from { transform: scaleX(0); } }
+@keyframes lift { to { transform: translateY(-100%); } }
+
+/* Screen changes: the page fades in, its blocks rise one after another. */
+.page { animation: fade 0.3s var(--ease) both; }
+.page > .stack > *, .page > .structure-grid > * { animation: rise 0.5s var(--ease) both; }
+.page > .stack > :nth-child(2) { animation-delay: 0.04s; }
+.page > .stack > :nth-child(3) { animation-delay: 0.08s; }
+.page > .stack > :nth-child(4) { animation-delay: 0.12s; }
+.page > .stack > :nth-child(5) { animation-delay: 0.16s; }
+.page > .stack > :nth-child(n + 6) { animation-delay: 0.2s; }
+
+/* Tab bar: the active pill slides to the tapped tab. */
+.nav a { position: relative; z-index: 1; }
+.nav a.on { background: transparent; }
+.nav-indicator {
+  position: absolute; top: 6px; bottom: 6px; left: 6px;
+  width: calc((100% - 12px - (var(--count) - 1) * 2px) / var(--count));
+  border-radius: 18px; background: var(--surface);
+  transform: translateX(calc(var(--i) * (100% + 2px)));
+  transition: transform 0.4s var(--ease);
+}
+
+/* Home hero: the day number rises, the start button pops in last. */
+.hero-day { animation: rise 0.7s var(--ease) 0.05s both; }
+.hero-topic { animation: rise 0.7s var(--ease) 0.15s both; }
+.hero .btn.lime { animation: pop 0.5s var(--ease) 0.3s both; }
+
+/* Chat: each new bubble pops in. */
+.bubble { animation: pop 0.3s var(--ease) both; }
+.bubble.them { transform-origin: left bottom; }
+.bubble.me { transform-origin: right bottom; }
+
+/* First-visit intro. */
+.splash {
+  position: fixed; inset: 0; z-index: 100;
+  display: grid; place-items: center; cursor: pointer;
+  background:
+    linear-gradient(rgb(255 255 255 / 0.08) 1px, transparent 1px) 0 0 / 22px 22px,
+    linear-gradient(90deg, rgb(255 255 255 / 0.08) 1px, transparent 1px) 0 0 / 22px 22px,
+    linear-gradient(180deg, var(--cream) 0%, #c9cdb4 55%, #7b8f75 100%);
+}
+.splash.out { animation: lift 0.55s cubic-bezier(0.7, 0, 0.2, 1) both; }
+.splash-inner { display: flex; flex-direction: column; align-items: center; gap: 14px; color: #1f211d; }
+.splash-mark {
+  width: 76px; height: 76px; border-radius: 22px; display: grid; place-items: center;
+  background: var(--sage); color: var(--lime); font: 500 2.6rem/1 var(--serif);
+  box-shadow: 0 12px 32px rgb(38 51 20 / 0.25);
+  animation: pop 0.6s var(--ease) both;
+}
+.splash-word { font: 500 2.4rem/1.1 var(--serif); letter-spacing: -0.02em; animation: rise 0.7s var(--ease) 0.15s both; }
+.splash-line { width: 64px; height: 3px; border-radius: 3px; background: var(--lime); transform-origin: left; animation: grow 0.6s var(--ease) 0.45s both; }
+.splash-caption { font-size: 0.9rem; color: #2f3a2b; animation: fade 0.6s var(--ease) 0.6s both; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; }
+}

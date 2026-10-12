@@ -441,3 +441,35 @@ test.describe('books', () => {
     await expect(page.locator('.nav a.on')).toContainText('문장 구조');
   });
 });
+
+test.describe('motion', () => {
+  test.use({ ...TAB_LANDSCAPE, reducedMotion: 'no-preference' });
+
+  test('intro plays once per session, can be skipped, and the tab pill follows the active tab', async ({ page }) => {
+    await seed(page, { sound: false });
+    await page.goto('/');
+    const splash = page.locator('.splash');
+    await expect(splash).toBeVisible();
+    await expect(splash).toContainText('니혼고 21');
+    await splash.click(); // tap to skip
+    await expect(splash).toBeHidden({ timeout: 2000 });
+
+    // Same session: no intro again.
+    await page.reload();
+    await page.waitForTimeout(300);
+    await expect(splash).toHaveCount(0);
+
+    const pill = page.locator('.nav-indicator');
+    const homeX = (await pill.boundingBox())!.x;
+    await page.locator('.nav').getByRole('link', { name: /진도/ }).click();
+    await expect(page.locator('.nav a.on')).toContainText('진도');
+    await expect.poll(async () => (await pill.boundingBox())!.x).toBeGreaterThan(homeX + 200);
+  });
+
+  test('no intro when the device asks for reduced motion', async ({ browser }) => {
+    const page = await (await browser.newContext({ ...TAB_LANDSCAPE, reducedMotion: 'reduce' })).newPage();
+    await page.goto('/');
+    await expect(page.getByRole('heading', { name: /Day 1/ })).toBeVisible();
+    await expect(page.locator('.splash')).toHaveCount(0);
+  });
+});
