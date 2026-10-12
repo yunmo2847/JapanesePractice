@@ -78,6 +78,7 @@ export function SurvivalList({ onPick, compact }: { onPick?: (text: string) => v
                   <Ja text={x.ja} />
                   <span className="muted small">{x.ko}</span>
                 </button>
+                {!compact && x.tip && <p className="tip small"><b>현지 팁</b> {x.tip}</p>}
                 {!compact && (
                   <div className="row wrap">
                     <Tag>{REGISTER[x.register]}</Tag>

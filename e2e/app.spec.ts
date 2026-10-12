@@ -418,6 +418,10 @@ test.describe('books', () => {
     await page.getByRole('tab', { name: '홈스테이' }).click();
     await expect(page.locator('.survival-group h4')).toHaveText(['인사', '식사', '부탁·허락', '생활·감사']);
     await expect(page.getByText('잘 먹겠습니다. (먹기 전)')).toBeVisible();
+    // First greeting a guest says at the door, with the local tip.
+    const first = page.locator('.survival-item').first();
+    await expect(first).toContainText('실례하겠습니다. (남의 집에 들어갈 때)');
+    await expect(first.locator('.tip')).toContainText("직역은 '방해하겠습니다'");
     await page.locator('.cat-chips').getByRole('button', { name: '식사' }).click();
     await expect(page.locator('.survival-group h4')).toHaveText(['식사']);
     await page.locator('.survival-item', { hasText: '잘 먹겠습니다' }).getByRole('button', { name: '즐겨찾기' }).click();

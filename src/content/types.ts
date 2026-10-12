@@ -70,6 +70,7 @@ export type Survival = {
   ko: string;
   register: Register | 'both';
   example?: JaKo;
+  tip?: string; // how natives actually use it: literal meaning, when, what the reply is
 };
 
 /** `match` (regex on normalized kana) narrows ambiguous forms, e.g. reason-から vs 韓国から. */

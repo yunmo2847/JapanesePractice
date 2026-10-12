@@ -340,3 +340,5 @@ details summary { cursor: pointer; min-height: 44px; display: flex; align-items:
 .conj { border-collapse: collapse; width: 100%; font-size: 1.05rem; }
 .conj th, .conj td { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--line); vertical-align: top; }
 .conj th { color: var(--muted); font-weight: 600; font-size: 0.9rem; width: 42%; }
+.tip { grid-column: 1 / -1; background: var(--warn-soft); border-radius: 8px; padding: 6px 10px; line-height: 1.6; }
+.tip b { color: var(--warn); margin-right: 4px; }
