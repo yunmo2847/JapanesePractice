@@ -199,6 +199,8 @@ for (const layout of LAYOUTS) {
         ['pattern', '/#/practice/3/pattern'],
         ['dialogue', '/#/practice/6/listen'],
         ['survival', '/#/survival'],
+        ['katakana', '/#/katakana'],
+        ['katakana-quiz', '/#/katakana/chars'],
         ['progress', '/#/progress'],
         ['settings', '/#/settings'],
       ]) {
@@ -211,3 +213,112 @@ for (const layout of LAYOUTS) {
     });
   });
 }
+
+/** Replaces speechSynthesis with a fake that records what was spoken and with which voice. */
+async function fakeSpeech(page: Page, voices: { name: string; lang: string }[], loadDelayMs: number) {
+  await page.addInitScript(({ voices, loadDelayMs }) => {
+    const w = window as unknown as { __spoken: { text: string; voice?: string; lang: string }[] };
+    w.__spoken = [];
+    let list: SpeechSynthesisVoice[] = [];
+    const target = new EventTarget();
+    const synth = {
+      getVoices: () => list,
+      speak(u: SpeechSynthesisUtterance) {
+        w.__spoken.push({ text: u.text, voice: u.voice?.name, lang: u.lang });
+        setTimeout(() => u.onend?.(new Event('end') as SpeechSynthesisEvent), 10);
+      },
+      cancel() {},
+      addEventListener: target.addEventListener.bind(target),
+      removeEventListener: target.removeEventListener.bind(target),
+    };
+    Object.defineProperty(window, 'speechSynthesis', { value: synth });
+    // The real utterance only accepts real voice objects.
+    (window as unknown as { SpeechSynthesisUtterance: unknown }).SpeechSynthesisUtterance = class {
+      text: string; lang = ''; voice?: SpeechSynthesisVoice; rate = 1; pitch = 1;
+      onend?: (e: Event) => void; onerror?: (e: Event) => void;
+      constructor(text: string) { this.text = text; }
+    };
+    setTimeout(() => {
+      list = voices.map((v) => ({ ...v, voiceURI: v.name, default: false, localService: true }) as SpeechSynthesisVoice);
+      target.dispatchEvent(new Event('voiceschanged'));
+    }, loadDelayMs);
+  }, { voices, loadDelayMs });
+}
+
+const spoken = (page: Page) => page.evaluate(() => (window as unknown as { __spoken: { text: string; voice?: string; lang: string }[] }).__spoken);
+
+test.describe('TTS speaks Japanese only', () => {
+  test.use(TAB_LANDSCAPE);
+
+  test('with only a Korean voice nothing is spoken and a notice appears', async ({ page }) => {
+    await seed(page, { sound: true });
+    await fakeSpeech(page, [{ name: 'Samsung Korean', lang: 'ko_KR' }], 50);
+    await page.goto('/#/practice/3/pattern');
+    await page.getByRole('button', { name: '듣기', exact: true }).first().click();
+    await expect(page.getByText('일본어 음성이 없어서 소리를 내지 않았어요')).toBeVisible();
+    expect(await spoken(page)).toEqual([]);
+  });
+
+  test('waits for a late-loading Japanese voice and uses it', async ({ page }) => {
+    await seed(page, { sound: true });
+    await fakeSpeech(page, [{ name: 'Samsung Korean', lang: 'ko-KR' }, { name: 'Google 日本語', lang: 'ja_JP' }], 800);
+    await page.goto('/#/practice/3/pattern');
+    await page.getByRole('button', { name: '듣기', exact: true }).first().click();
+    await expect.poll(() => spoken(page)).toHaveLength(1);
+    const [u] = await spoken(page);
+    expect(u).toEqual({ text: 'ラーメンが好きです。', voice: 'Google 日本語', lang: 'ja_JP' });
+  });
+
+  test('does not read Korean typed into a free-talk answer', async ({ page }) => {
+    await seed(page, { sound: false });
+    await fakeSpeech(page, [{ name: 'Google 日本語', lang: 'ja-JP' }], 0);
+    await page.goto('/#/practice/3/talk/t-food');
+    await page.getByRole('button', { name: '시작하기 ▶' }).click();
+    const talk = page.locator('.talk-input input');
+    await talk.fill('ラーメンがすきです。');
+    await talk.press('Enter');
+    await talk.fill('라면 좋아');
+    await talk.press('Enter');
+    await page.getByRole('button', { name: '끝내기' }).click();
+    await page.getByRole('button', { name: '내 문장 듣기' }).click();
+    await expect.poll(() => spoken(page)).toHaveLength(1);
+    expect((await spoken(page))[0].text).toBe('ラーメンがすきです。');
+  });
+});
+
+test.describe('katakana', () => {
+  test.use(TAB_LANDSCAPE);
+
+  test('chart, character quiz, reading and writing loanwords', async ({ page }) => {
+    await seed(page, { sound: false });
+    await page.goto('/#/practice');
+    await page.getByRole('button', { name: 'カ 가타카나' }).click();
+    await expect(page.locator('.kana-cell', { hasText: 'ア' }).first()).toBeVisible();
+    await expect(page.locator('.kana-cell')).toHaveCount(46 + 25 + 33 + 13);
+
+    // Character quiz: pick the right romaji using the chart data.
+    await page.getByRole('tab', { name: '글자 퀴즈' }).click();
+    const { allKana } = await import('../src/content/katakana');
+    const romajiOf = new Map(allKana().map((k) => [k.kana, k.romaji]));
+    const shown = (await page.locator('.kana-quiz').textContent())!;
+    await page.getByRole('button', { name: romajiOf.get(shown)!, exact: true }).click();
+    await expect(page.locator('.quiz-options .btn.good')).toHaveText(romajiOf.get(shown)!);
+    await page.getByRole('button', { name: '다음 ▶' }).click();
+    await expect(page.getByText('2 / 20')).toBeVisible();
+
+    // Writing: romaji typed in the katakana box turns into katakana.
+    await page.getByRole('tab', { name: '외래어 쓰기' }).click();
+    const input = page.locator('.kana-input input');
+    await input.pressSequentially('ko-hi-');
+    await expect(input).toHaveValue('コーヒー');
+
+    // Reading: type the reading of the word shown.
+    await page.getByRole('tab', { name: '외래어 읽기' }).click();
+    const word = (await page.locator('.kana-word').textContent())!;
+    // Katakana → hiragana keeping ー, as typing "ko-hi-" produces.
+    const asTyped = word.replace(/[\u30a1-\u30f6]/g, (c) => String.fromCharCode(c.charCodeAt(0) - 0x60));
+    await page.locator('.kana-input input').fill(asTyped);
+    await page.getByRole('button', { name: '확인' }).click();
+    await expect(page.getByText('정답!')).toBeVisible();
+  });
+});

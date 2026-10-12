@@ -50,6 +50,7 @@ export function Practice({ route }: { route: string[] }) {
       <div className="row wrap">
         <button className="btn primary lg" onClick={random}>🎲 랜덤 주제로 프리토킹</button>
         <button className="btn lg" onClick={() => navigate(`/practice/${day}/review`)}>🔁 복습 카드 전체</button>
+        <button className="btn lg" onClick={() => navigate('/katakana')}>カ 가타카나</button>
       </div>
       <div className="day-chips" role="tablist" aria-label="날짜 선택">
         {Array.from({ length: CONTENT_DAYS }, (_, i) => i + 1).map((d) => (

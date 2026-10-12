@@ -317,3 +317,14 @@ rt { font-size: 0.5em; color: var(--muted); }
 .growth { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 10px; margin-top: 8px; }
 .growth-item { background: var(--bg); border-radius: 12px; padding: 10px; }
 details summary { cursor: pointer; min-height: 44px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+
+.voice-notice { display: flex; flex-direction: column; gap: 8px; margin-bottom: 14px; }
+
+/* ---------- katakana ---------- */
+.kana-grid { display: flex; flex-direction: column; gap: 6px; }
+.kana-row { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 6px; }
+.kana-cell { min-height: 64px; display: flex; flex-direction: column; align-items: center; justify-content: center; border: 1px solid var(--line); border-radius: 10px; background: var(--panel); cursor: pointer; touch-action: manipulation; }
+.kana-cell:active { background: var(--accent-soft); }
+.kana-big { font-size: 1.6rem; line-height: 1.2; }
+.kana-quiz { font-size: 5rem; line-height: 1.2; font-family: 'Noto Sans JP', 'Hiragino Sans', system-ui, sans-serif; }
+.kana-word { font-size: 2.2rem; font-family: 'Noto Sans JP', 'Hiragino Sans', system-ui, sans-serif; }

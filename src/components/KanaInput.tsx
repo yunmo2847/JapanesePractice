@@ -1,5 +1,5 @@
 import { forwardRef, useEffect, useImperativeHandle, useRef } from 'react';
-import { toKana } from 'wanakana';
+import { toKana, toKatakana } from 'wanakana';
 import { useSettings } from '../lib/store';
 import { finishKana } from '../lib/kana';
 
@@ -12,6 +12,7 @@ type Props = {
   disabled?: boolean;
   autoFocus?: boolean;
   submitLabel?: string;
+  katakana?: boolean; // convert romaji to katakana instead of hiragana
 };
 
 /**
@@ -20,7 +21,7 @@ type Props = {
  * text) and runs on compositionend, so characters are not doubled.
  */
 export const KanaInput = forwardRef<KanaInputHandle, Props>(function KanaInput(
-  { onSubmit, onFirstKey, placeholder, disabled, autoFocus, submitLabel = '보내기' },
+  { onSubmit, onFirstKey, placeholder, disabled, autoFocus, submitLabel = '보내기', katakana },
   ref,
 ) {
   const [s] = useSettings();
@@ -35,7 +36,7 @@ export const KanaInput = forwardRef<KanaInputHandle, Props>(function KanaInput(
     const head = el.value.slice(0, cursor);
     const tail = el.value.slice(cursor);
     // IMEMode keeps a lone trailing "n" until the next key decides ん/な/に…
-    const converted = toKana(head, { IMEMode: true });
+    const converted = katakana ? toKatakana(head, { IMEMode: true }) : toKana(head, { IMEMode: true });
     if (converted !== head) {
       el.value = converted + tail;
       el.setSelectionRange(converted.length, converted.length);
@@ -61,7 +62,7 @@ export const KanaInput = forwardRef<KanaInputHandle, Props>(function KanaInput(
   const submit = () => {
     const el = input.current;
     if (!el) return;
-    const text = (s.romaji ? finishKana(el.value) : el.value).trim();
+    const text = (s.romaji ? (katakana ? toKatakana(el.value) : finishKana(el.value)) : el.value).trim();
     if (!text) return;
     onSubmit(text);
     el.value = '';

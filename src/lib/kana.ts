@@ -84,3 +84,14 @@ export function diff(input: string, target: string): DiffPart[] {
   }
   return parts;
 }
+
+/**
+ * Katakana writing check: exact katakana is correct. The right sound in hiragana or
+ * with a missing ー counts as near (the learner sees what to fix).
+ */
+export function gradeKatakana(input: string, answer: string): Grade {
+  const strip = (t: string) => t.replace(/[\s、。・]/g, '');
+  if (strip(input) === strip(answer)) return 'correct';
+  const g = grade(input, [answer]).grade;
+  return g === 'correct' ? 'near' : g;
+}
