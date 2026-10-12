@@ -223,11 +223,15 @@ async function fakeSpeech(page: Page, voices: { name: string; lang: string }[], 
     const target = new EventTarget();
     const synth = {
       getVoices: () => list,
+      speaking: false,
+      pending: false,
       speak(u: SpeechSynthesisUtterance) {
         w.__spoken.push({ text: u.text, voice: u.voice?.name, lang: u.lang });
+        setTimeout(() => u.onstart?.(new Event('start') as SpeechSynthesisEvent), 5);
         setTimeout(() => u.onend?.(new Event('end') as SpeechSynthesisEvent), 10);
       },
       cancel() {},
+      resume() {},
       addEventListener: target.addEventListener.bind(target),
       removeEventListener: target.removeEventListener.bind(target),
     };
@@ -235,7 +239,7 @@ async function fakeSpeech(page: Page, voices: { name: string; lang: string }[], 
     // The real utterance only accepts real voice objects.
     (window as unknown as { SpeechSynthesisUtterance: unknown }).SpeechSynthesisUtterance = class {
       text: string; lang = ''; voice?: SpeechSynthesisVoice; rate = 1; pitch = 1;
-      onend?: (e: Event) => void; onerror?: (e: Event) => void;
+      onstart?: (e: Event) => void; onend?: (e: Event) => void; onerror?: (e: Event) => void;
       constructor(text: string) { this.text = text; }
     };
     setTimeout(() => {
@@ -266,7 +270,28 @@ test.describe('TTS speaks Japanese only', () => {
     await page.getByRole('button', { name: '듣기', exact: true }).first().click();
     await expect.poll(() => spoken(page)).toHaveLength(1);
     const [u] = await spoken(page);
-    expect(u).toEqual({ text: 'ラーメンが好きです。', voice: 'Google 日本語', lang: 'ja_JP' });
+    // lang stays a valid tag even though Android reports the voice as ja_JP.
+    expect(u).toEqual({ text: 'ラーメンが好きです。', voice: 'Google 日本語', lang: 'ja-JP' });
+  });
+
+  test('with no voice list at all it still speaks, asking the system for ja-JP', async ({ page }) => {
+    await seed(page, { sound: true });
+    await fakeSpeech(page, [], 60_000); // list never arrives within the test
+    await page.goto('/#/practice/3/pattern');
+    await page.getByRole('button', { name: '듣기', exact: true }).first().click();
+    await expect.poll(() => spoken(page), { timeout: 5000 }).toHaveLength(1);
+    expect((await spoken(page))[0]).toEqual({ text: 'ラーメンが好きです。', voice: undefined, lang: 'ja-JP' });
+    await expect(page.getByText('일본어 음성이 없어서')).toBeHidden();
+  });
+
+  test('settings voice test reports progress and the voices it sees', async ({ page }) => {
+    await seed(page, { sound: true });
+    await fakeSpeech(page, [{ name: 'Samsung Korean', lang: 'ko_KR' }, { name: 'Google 日本語', lang: 'ja_JP' }], 0);
+    await page.goto('/#/settings');
+    await page.getByRole('button', { name: '🔊 음성 테스트' }).click();
+    await expect(page.getByRole('status').filter({ hasText: '재생 끝' })).toBeVisible();
+    await page.getByText('소리가 안 날 때 진단 정보').click();
+    await expect(page.getByText('브라우저가 알려준 음성: 2개 (일본어 1개)')).toBeVisible();
   });
 
   test('does not read Korean typed into a free-talk answer', async ({ page }) => {

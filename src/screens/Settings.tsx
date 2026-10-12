@@ -1,12 +1,13 @@
 import { useState } from 'react';
 import { initialState, useSettings, useStore, type OutputMode } from '../lib/store';
-import { speak, ttsSupported, useJapaneseVoices } from '../lib/tts';
+import { speak, ttsSupported, useVoices } from '../lib/tts';
 
 export function Settings() {
   const [s, set] = useSettings();
   const { update } = useStore();
-  const voices = useJapaneseVoices();
-  const [tested, setTested] = useState(false);
+  const allVoices = useVoices();
+  const voices = allVoices.filter((v) => v.lang.replace('_', '-').toLowerCase().startsWith('ja'));
+  const [status, setStatus] = useState('');
 
   return (
     <div className="stack settings">
@@ -35,23 +36,35 @@ export function Settings() {
           </select>
         </label>
         <div className="row wrap">
-          <button className="btn" onClick={() => { setTested(true); speak('こんにちは、よろしくお願いします。', { rate: s.rate, voice: s.voice }); }}>
+          <button className="btn" onClick={() => {
+            setStatus('준비 중…');
+            speak('こんにちは、よろしくお願いします。', { rate: s.rate, voice: s.voice, onStatus: setStatus });
+          }}>
             🔊 음성 테스트
           </button>
-          {tested && <span className="small muted">들리지 않거나 한국어/영어 발음이면 아래 방법으로 일본어 음성을 설치하세요.</span>}
+          {status && <span className="small" role="status">{status}</span>}
         </div>
-        {(!ttsSupported || voices.length === 0) && (
-          <div className="notice" role="alert">
-            <b>일본어 음성이 없어요.</b> 갤럭시 탭에서 설치하기:
-            <ol>
-              <li>설정 → 일반 → <b>텍스트 음성 변환(TTS)</b></li>
-              <li>기본 엔진을 <b>Google 음성 인식 및 합성</b>으로 선택</li>
-              <li>엔진 옆 ⚙ → <b>음성 데이터 설치</b> → <b>日本語</b> 다운로드</li>
-              <li>이 앱으로 돌아와 새로고침</li>
-            </ol>
-            <span className="small muted">삼성 TTS 엔진에 일본어가 있으면 그대로 써도 돼요.</span>
-          </div>
-        )}
+        <details>
+          <summary className="small">소리가 안 날 때 진단 정보</summary>
+          <ul className="small">
+            <li>브라우저가 알려준 음성: <b>{allVoices.length}개</b> (일본어 <b>{voices.length}개</b>)</li>
+            {voices.map((v) => <li key={v.voiceURI}>{v.name} · {v.lang}{v.localService ? '' : ' · 온라인'}</li>)}
+            <li>{!ttsSupported ? '이 브라우저는 음성 재생을 지원하지 않아요. 크롬으로 열어 주세요.'
+              : allVoices.length === 0 ? '음성 목록이 비어 있어요. 시스템 기본 일본어 음성으로 재생을 시도해요.'
+              : voices.length === 0 ? '음성은 있지만 일본어가 없어요. 아래 설치 방법을 따른 뒤 크롬을 완전히 껐다 켜세요.'
+              : '일본어 음성이 보여요. 테스트에서 "오류"가 나오면 그 내용을 알려주세요.'}</li>
+          </ul>
+        </details>
+        <div className="notice">
+          <b>소리가 안 나면 순서대로 확인하세요</b>
+          <ol>
+            <li>태블릿 <b>미디어 볼륨</b>이 켜져 있는지 (볼륨 버튼 → 미디어), 이어폰 연결 확인</li>
+            <li>설정 → 일반 → <b>텍스트 음성 변환(TTS)</b> → 기본 엔진 <b>Google 음성 인식 및 합성</b></li>
+            <li>엔진 옆 ⚙ → <b>음성 데이터 설치</b> → <b>日本語</b> 다운로드</li>
+            <li><b>크롬을 완전히 종료</b>(최근 앱 버튼 → 크롬을 위로 밀어 닫기)한 뒤 다시 열기 — 크롬은 껐다 켜야 새로 설치한 음성을 인식해요</li>
+            <li>위의 음성 테스트를 다시 누르기</li>
+          </ol>
+        </div>
       </section>
 
       <section className="panel stack">

@@ -4,12 +4,12 @@ const synth = typeof window !== 'undefined' ? window.speechSynthesis : undefined
 
 const isJa = (v: SpeechSynthesisVoice) => v.lang.replace('_', '-').toLowerCase().startsWith('ja');
 
-/** Japanese voices. Android Chrome fills the list late, so listen for voiceschanged. */
-export function useJapaneseVoices(): SpeechSynthesisVoice[] {
+/** All voices the browser reports. Android Chrome fills the list late, so listen for voiceschanged. */
+export function useVoices(): SpeechSynthesisVoice[] {
   const [voices, setVoices] = useState<SpeechSynthesisVoice[]>([]);
   useEffect(() => {
     if (!synth) return;
-    const read = () => setVoices(synth.getVoices().filter(isJa));
+    const read = () => setVoices(synth.getVoices());
     read();
     synth.addEventListener('voiceschanged', read);
     return () => synth.removeEventListener('voiceschanged', read);
@@ -17,12 +17,31 @@ export function useJapaneseVoices(): SpeechSynthesisVoice[] {
   return voices;
 }
 
-export type SpeakOptions = { rate: number; voice: string; pitch?: number };
+export function useJapaneseVoices(): SpeechSynthesisVoice[] {
+  return useVoices().filter(isJa);
+}
 
-/** Waits (briefly) for the voice list, then returns a Japanese voice or undefined. */
-async function japaneseVoice(uri: string): Promise<SpeechSynthesisVoice | undefined> {
-  if (!synth) return undefined;
-  if (synth.getVoices().length === 0) {
+export type SpeakOptions = {
+  rate: number;
+  voice: string;
+  pitch?: number;
+  /** Progress messages, used by the voice test in settings. */
+  onStatus?: (status: string) => void;
+};
+
+let waitedForVoices = false;
+
+/**
+ * Picks the voice to use.
+ * - Japanese voice listed → use it.
+ * - Voices listed but none Japanese → 'none' (never fall back to e.g. a Korean voice).
+ * - No list at all (some Android browsers never fill it) → undefined: speak with lang ja-JP
+ *   and let the system engine choose its Japanese voice.
+ */
+async function chooseVoice(uri: string): Promise<SpeechSynthesisVoice | 'none' | undefined> {
+  if (!synth) return 'none';
+  if (synth.getVoices().length === 0 && !waitedForVoices) {
+    waitedForVoices = true;
     await new Promise<void>((resolve) => {
       const done = () => {
         synth.removeEventListener('voiceschanged', done);
@@ -32,8 +51,10 @@ async function japaneseVoice(uri: string): Promise<SpeechSynthesisVoice | undefi
       setTimeout(done, 2000);
     });
   }
-  const ja = synth.getVoices().filter(isJa);
-  return ja.find((v) => v.voiceURI === uri) ?? ja[0];
+  const all = synth.getVoices();
+  if (all.length === 0) return undefined;
+  const ja = all.filter(isJa);
+  return ja.find((v) => v.voiceURI === uri) ?? ja[0] ?? 'none';
 }
 
 /** Text to speak: Japanese only. Hangul (e.g. Korean typed into a chat line) is dropped. */
@@ -41,49 +62,68 @@ export function speakable(text: string): string {
   return text.replace(/[ᄀ-ᇿ㄰-㆏가-힯]+/g, ' ').replace(/\s+/g, ' ').trim();
 }
 
-/** Fired when speech was skipped because the device has no Japanese voice. */
+/** Fired when speech was skipped because the browser lists voices but no Japanese one. */
 export const NO_JA_VOICE = 'tts-no-japanese-voice';
 
 let generation = 0;
+// Chrome can garbage-collect an utterance mid-speech (no sound, no onend); keep references.
+const alive = new Set<SpeechSynthesisUtterance>();
 
 /**
  * Speaks Japanese text sentence by sentence (Android Chrome cuts long utterances off).
- * Never falls back to the device's default (e.g. Korean) voice: without a Japanese
- * voice nothing is spoken and NO_JA_VOICE is dispatched. Resolves when finished or cancelled.
+ * Never uses a non-Japanese voice. Resolves when finished or cancelled.
  */
 export async function speak(text: string, opts: SpeakOptions): Promise<void> {
-  if (!synth) return;
-  synth.cancel();
+  const status = opts.onStatus ?? (() => {});
+  if (!synth) return status('이 브라우저는 음성 재생을 지원하지 않아요.');
   const gen = ++generation;
+  if (synth.speaking || synth.pending) {
+    synth.cancel();
+    // Chrome drops an utterance queued right after cancel(); give it a moment.
+    await new Promise((r) => setTimeout(r, 80));
+  }
   const parts = speakable(text).split(/(?<=[。！？!?])/).map((p) => p.trim()).filter(Boolean);
   if (!parts.length) return;
-  const voice = await japaneseVoice(opts.voice);
+  const voice = await chooseVoice(opts.voice);
   if (gen !== generation) return;
-  if (!voice) {
+  if (voice === 'none') {
+    status('일본어 음성을 찾지 못했어요.');
     window.dispatchEvent(new Event(NO_JA_VOICE));
     return;
   }
+  synth.resume(); // Android Chrome can stay paused after the tab was in the background.
   return new Promise((resolve) => {
     let i = 0;
     let guard = 0;
     const next = () => {
       clearTimeout(guard);
-      if (i >= parts.length || gen !== generation) return resolve();
+      if (i >= parts.length || gen !== generation) {
+        status('재생 끝');
+        return resolve();
+      }
       const part = parts[i++];
       const u = new SpeechSynthesisUtterance(part);
-      u.voice = voice;
-      u.lang = voice.lang;
+      // Always a valid tag: Android reports voice.lang as "ja_JP", which the engine rejects.
+      u.lang = 'ja-JP';
+      if (voice) u.voice = voice;
       u.rate = opts.rate;
       u.pitch = opts.pitch ?? 1;
       const mine = i;
       const advance = () => i === mine && next(); // ignore a late onend after the guard fired
-      u.onend = advance;
-      u.onerror = () => {
+      u.onstart = () => status(`재생 중 · ${voice ? voice.name : '시스템 기본 일본어 음성'}`);
+      u.onend = () => {
+        alive.delete(u);
+        advance();
+      };
+      u.onerror = (e) => {
+        alive.delete(u);
         clearTimeout(guard);
+        status(`오류: ${(e as SpeechSynthesisErrorEvent).error ?? 'unknown'}`);
         resolve();
       };
       // Some engines never fire onend (background tab, engine hiccup): move on anyway.
       guard = window.setTimeout(advance, 2000 + (part.length * 400) / opts.rate);
+      alive.add(u);
       synth.speak(u);
     };
     next();
@@ -92,6 +132,7 @@ export async function speak(text: string, opts: SpeakOptions): Promise<void> {
 
 export function stopSpeaking() {
   generation++;
+  alive.clear();
   synth?.cancel();
 }
 
