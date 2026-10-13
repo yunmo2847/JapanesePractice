@@ -70,14 +70,17 @@ describe('content integrity', () => {
 
   it('references existing patterns and fills every day with content', () => {
     for (const t of topics) for (const id of t.hints.patterns) expect(patternById(id), `${t.id} → ${id}`).toBeTruthy();
-    for (let day = 1; day < CONTENT_DAYS; day++) {
+    for (let day = 1; day <= CONTENT_DAYS; day++) {
+      if (day % 7 === 0) {
+        expect(topics.filter((t) => t.day === day).length, `test topics day ${day}`).toBe(3);
+        continue;
+      }
       expect(cards.filter((c) => c.day === day).length, `cards day ${day}`).toBeGreaterThanOrEqual(10);
       expect(patterns.some((p) => p.day === day), `pattern day ${day}`).toBe(true);
       expect(chains.filter((c) => c.day === day).length, `chains day ${day}`).toBe(3);
       expect(topics.some((t) => t.day === day), `topic day ${day}`).toBe(true);
       expect(dialogues.some((d) => d.day === day), `dialogue day ${day}`).toBe(true);
     }
-    expect(topics.filter((t) => t.day === CONTENT_DAYS).length).toBe(3);
   });
 
   it('keeps pattern swap templates fillable and quiz answers in range', () => {

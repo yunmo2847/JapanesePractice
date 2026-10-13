@@ -20,7 +20,7 @@ export const connectors = connectorsJson as Connector[];
 export const structures = structuresJson as Structure[];
 
 /** Last day that has content. Days after this show "콘텐츠 준비 중". */
-export const CONTENT_DAYS = 7;
+export const CONTENT_DAYS = 14;
 
 export const byDay = <T extends { day: number }>(list: T[], day: number) => list.filter((x) => x.day === day);
 
@@ -63,6 +63,13 @@ export const DAY_THEME: Record<number, string> = {
   5: '묘사하기',
   6: '되묻기',
   7: '복습 + 프리토킹 테스트 ①',
+  8: '과거 이야기 순서',
+  9: '문장 잇기 ① て형',
+  10: '이유 붙이기',
+  11: '반대·완충 (けど · でも)',
+  12: '의견 말하기',
+  13: '막혔을 때 버티기',
+  14: '복습 + 프리토킹 테스트 ②',
 };
 
 export const STRUCTURE_SECTIONS: { id: StructureSection; label: string }[] = [

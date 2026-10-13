@@ -473,3 +473,45 @@ test.describe('motion', () => {
     await expect(page.locator('.splash')).toHaveCount(0);
   });
 });
+
+test.describe('Week 2', () => {
+  test.use(TAB_LANDSCAPE);
+
+  test('Day 8 session runs end to end with the new content', async ({ page }) => {
+    await seed(page, { sound: false, minutes: 30 });
+    await page.goto('/#/session/8');
+    await expect(page.getByRole('heading', { name: /Day 8/ })).toBeVisible();
+    // Cards: Week 1 reviews first, then Day 8 cards. Answer each with its reading.
+    const all = cards as { id: string; ja: string; day: number }[];
+    const input = page.locator('.kana-input input');
+    for (let i = 0; i < 40 && (await page.getByText('카드 완료').count()) === 0; i++) {
+      const ko = (await page.locator('.prompt-ko').textContent())!;
+      const card = all.find((c) => (c as unknown as { ko: string }).ko === ko && c.day <= 8)!;
+      await input.fill(reading(card.ja));
+      await page.getByRole('button', { name: '확인' }).click();
+      await page.getByRole('button', { name: '다음' }).click();
+    }
+    await page.getByRole('button', { name: '다음으로' }).click();
+    await expect(page.getByRole('heading', { name: '~했어요 / 안 했어요' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: '순서대로 말하기' })).toBeVisible();
+    await page.getByRole('button', { name: '다음으로' }).click();
+    await page.getByRole('button', { name: '시작하기' }).click();
+    await expect(page.locator('.bubble.them').first()).toContainText('지난 주말에 뭐 했어요?');
+    await page.locator('.talk-input input').fill('さいしょにカフェにいきました。それからかいものをしました。');
+    await page.locator('.talk-input input').press('Enter');
+    await page.getByRole('button', { name: '끝내기' }).click();
+    await expect(page.locator('.stat', { hasText: '문장 (목표 5)' })).toBeVisible();
+    await page.getByRole('button', { name: '완료' }).click();
+    await expect(page.getByText('Day 8 완료')).toBeVisible();
+  });
+
+  test('Day 14 is a test day with three new topics', async ({ page }) => {
+    await seed(page, { sound: false });
+    await page.goto('/#/session/14');
+    await expect(page.locator('.steps li')).toHaveText(['인출 카드', '테스트 1', '테스트 2', '테스트 3']);
+    await page.goto('/#/practice/14');
+    await expect(page.getByRole('button', { name: /가장 기억에 남는 추억/ })).toBeVisible();
+    await expect(page.getByRole('button', { name: /요즘 빠져 있는 건/ })).toBeVisible();
+    await expect(page.getByRole('button', { name: /일본에서 가보고 싶은 곳/ })).toBeVisible();
+  });
+});
